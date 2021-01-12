@@ -16,42 +16,45 @@
 
 package com.googlingual.springboot;
 
-
 public class ChatMessage {
-    private String message;
-    private String locale;
-    private AudioMessage audioMessage;
+  private String message;
+  private String locale;
+  private AudioMessage audioMessage;
 
-    public ChatMessage() {}
+  public ChatMessage() {
+  }
 
-    public ChatMessage(String message, AudioMessage audioMessage, String locale) {
-        this.message = message;
-        this.audioMessage = audioMessage;
-        this.locale = locale;
-    }
+  public ChatMessage(String message, AudioMessage audioMessage, String locale) {
+    this.message = message;
+    this.audioMessage = audioMessage;
+    this.locale = locale;
+  }
 
-    public String getMessage() {
-        return message;
-    }
+  public String getMessage() {
+    return message;
+  }
 
-    public String getLocale() {
-        return locale;
-    }
+  public AudioMessage getAudioMessage() {
+    return audioMessage;
+  }
 
-    public void setMessage(String message) {
-        this.message = message;
-    }
+  public String getLocale() {
+    return locale;
+  }
 
-    public void setLocale(String locale) {
-        this.locale = locale;
-    }
+  public void setMessage(String message) {
+    this.message = message;
+  }
 
-    public String toString() {
-        return new StringBuilder()
-            .append(message)
-            .append(" (")
-            .append(locale)
-            .append(")")
-            .toString();
-    }
+  public void setAudioMessage(AudioMessage audioMessage) {
+    this.audioMessage = audioMessage;
+  }
+
+  public void setLocale(String locale) {
+    this.locale = locale;
+  }
+
+  public String toString() {
+    return new StringBuilder().append(message).append(" (").append(locale).append(")").toString();
+  }
 }
