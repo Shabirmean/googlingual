@@ -65,8 +65,9 @@ public class SpringbootApplication {
     }
 
     @PostMapping(path = "/translate", consumes = "application/json", produces = "application/json")
-    public void addMember(@RequestBody ChatMessage message) {
+    public ChatMessage translate(@RequestBody ChatMessage message) {
         logger.log(Level.INFO, "Received message: " + message.toString());
+        return message;
     }
 
 
