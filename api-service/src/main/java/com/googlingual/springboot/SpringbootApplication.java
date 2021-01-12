@@ -23,6 +23,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.google.api.client.util.Base64;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
@@ -112,7 +113,7 @@ public class SpringbootApplication {
 
       // Get the audio contents from the response
       ByteString audioContents = response.getAudioContent();
-      return new AudioMessage(audioContents.toStringUtf8());
+      return new AudioMessage(Base64.encodeBase64String(audioContents.toByteArray()));
     } catch (IOException ex) {
       logger.log(Level.SEVERE, "Failed to convert text to audio: [" + textMessage + "]", ex);
       return new AudioMessage();
