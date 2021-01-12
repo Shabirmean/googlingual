@@ -32,6 +32,8 @@ import com.google.pubsub.v1.PubsubMessage;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @SpringBootApplication
@@ -61,6 +63,12 @@ public class SpringbootApplication {
         }
         return responseMessage;
     }
+
+    @PostMapping(path = "/translate", consumes = "application/json", produces = "application/json")
+    public void addMember(@RequestBody ChatMessage message) {
+        logger.log(Level.INFO, "Received message: " + message.toString());
+    }
+
 
     private String getSaltString() {
         String SALTCHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
