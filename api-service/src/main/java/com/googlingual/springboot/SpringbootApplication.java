@@ -28,6 +28,7 @@ import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
 import com.google.cloud.translate.*;
+import com.google.cloud.translate.Translate.TranslateOption;
 
 // [START gae_java11_helloworld]
 import org.springframework.boot.SpringApplication;
@@ -43,7 +44,9 @@ public class SpringbootApplication {
   private static final Logger logger = Logger.getLogger(SpringbootApplication.class.getName());
   private static final String CF_PUBLISH_TOPIC = "hello-world-sub";
   private static final String PROJECT_ID = "gcloud-dpe";
-  private static final Translate translate = TranslateOptions.getDefaultInstance().getService();
+  private static final String DEFAULT_TARGET_LOCALE = "ta";
+  private static final Translate translationService = TranslateOptions.getDefaultInstance().getService();
+  private static final TranslateOption NMT_MODEL = Translate.TranslateOption.model("nmt");
 
   public static void main(String[] args) {
     SpringApplication.run(SpringbootApplication.class, args);
@@ -68,7 +71,9 @@ public class SpringbootApplication {
 
   @PostMapping(path = "/translate", consumes = "application/json", produces = "application/json")
   public ChatMessage translate(@RequestBody ChatMessage chatMessage) {
-    Translation translation = translate.translate(chatMessage.getMessage());
+    Translation translation = translationService.translate(chatMessage.getMessage(),
+        Translate.TranslateOption.sourceLanguage(chatMessage.getLocale()),
+        Translate.TranslateOption.targetLanguage(DEFAULT_TARGET_LOCALE), NMT_MODEL);
     String tranlatedMessage = translation.getTranslatedText();
     logger.log(Level.INFO, "Received message: " + chatMessage.toString());
     logger.log(Level.INFO, "Translated message: " + tranlatedMessage);
