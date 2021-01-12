@@ -27,6 +27,7 @@ import com.google.cloud.pubsub.v1.Publisher;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
+import com.google.cloud.translate.*;
 
 // [START gae_java11_helloworld]
 import org.springframework.boot.SpringApplication;
@@ -39,49 +40,52 @@ import org.springframework.web.bind.annotation.RestController;
 @SpringBootApplication
 @RestController
 public class SpringbootApplication {
-    private static final Logger logger = Logger.getLogger(SpringbootApplication.class.getName());
-    private static final String CF_PUBLISH_TOPIC = "hello-world-sub";
-    private static final String PROJECT_ID = "gcloud-dpe";
+  private static final Logger logger = Logger.getLogger(SpringbootApplication.class.getName());
+  private static final String CF_PUBLISH_TOPIC = "hello-world-sub";
+  private static final String PROJECT_ID = "gcloud-dpe";
+  private static final Translate translate = TranslateOptions.getDefaultInstance().getService();
 
-    public static void main(String[] args) {
-        SpringApplication.run(SpringbootApplication.class, args);
+  public static void main(String[] args) {
+    SpringApplication.run(SpringbootApplication.class, args);
+  }
+
+  @GetMapping("/")
+  public String hello() {
+    ByteString byteStr = ByteString.copyFrom(getSaltString(), StandardCharsets.UTF_8);
+    PubsubMessage pubsubApiMessage = PubsubMessage.newBuilder().setData(byteStr).build();
+
+    // Attempt to publish the message
+    String responseMessage = "Hello Shabirmean is here!";
+    try {
+      Publisher publisher = Publisher.newBuilder(ProjectTopicName.of(PROJECT_ID, CF_PUBLISH_TOPIC)).build();
+      publisher.publish(pubsubApiMessage).get();
+    } catch (InterruptedException | ExecutionException | IOException e) {
+      logger.log(Level.SEVERE, "Error publishing Pub/Sub message: " + e.getMessage(), e);
+      responseMessage = "Error publishing Pub/Sub message; see logs for more info.";
     }
+    return responseMessage;
+  }
 
-    @GetMapping("/")
-    public String hello() {
-        ByteString byteStr = ByteString.copyFrom(getSaltString(), StandardCharsets.UTF_8);
-        PubsubMessage pubsubApiMessage = PubsubMessage.newBuilder().setData(byteStr).build();
+  @PostMapping(path = "/translate", consumes = "application/json", produces = "application/json")
+  public ChatMessage translate(@RequestBody ChatMessage chatMessage) {
+    Translation translation = translate.translate(chatMessage.getMessage());
+    String tranlatedMessage = translation.getTranslatedText();
+    logger.log(Level.INFO, "Received message: " + chatMessage.toString());
+    logger.log(Level.INFO, "Translated message: " + tranlatedMessage);
+    return new ChatMessage(tranlatedMessage, chatMessage.getLocale());
+  }
 
-        // Attempt to publish the message
-        String responseMessage = "Hello Shabirmean is here!";
-        try {
-            Publisher publisher = Publisher.newBuilder(ProjectTopicName.of(PROJECT_ID, CF_PUBLISH_TOPIC)).build();
-            publisher.publish(pubsubApiMessage).get();
-        } catch (InterruptedException | ExecutionException | IOException e) {
-            logger.log(Level.SEVERE, "Error publishing Pub/Sub message: " + e.getMessage(), e);
-            responseMessage = "Error publishing Pub/Sub message; see logs for more info.";
-        }
-        return responseMessage;
+  private String getSaltString() {
+    String SALTCHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+    StringBuilder salt = new StringBuilder();
+    Random rnd = new Random();
+    while (salt.length() < 18) { // length of the random string.
+      int index = (int) (rnd.nextFloat() * SALTCHARS.length());
+      salt.append(SALTCHARS.charAt(index));
     }
-
-    @PostMapping(path = "/translate", consumes = "application/json", produces = "application/json")
-    public ChatMessage translate(@RequestBody ChatMessage message) {
-        logger.log(Level.INFO, "Received message: " + message.toString());
-        return message;
-    }
-
-
-    private String getSaltString() {
-        String SALTCHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
-        StringBuilder salt = new StringBuilder();
-        Random rnd = new Random();
-        while (salt.length() < 18) { // length of the random string.
-            int index = (int) (rnd.nextFloat() * SALTCHARS.length());
-            salt.append(SALTCHARS.charAt(index));
-        }
-        String saltStr = salt.toString();
-        return saltStr;
-    }
+    String saltStr = salt.toString();
+    return saltStr;
+  }
 
 }
 // [END gae_java11_helloworld]
