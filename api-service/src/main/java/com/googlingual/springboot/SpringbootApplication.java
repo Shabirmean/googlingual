@@ -30,6 +30,14 @@ import com.google.pubsub.v1.PubsubMessage;
 import com.google.cloud.translate.*;
 import com.google.cloud.translate.Translate.TranslateOption;
 
+import com.google.cloud.texttospeech.v1.AudioConfig;
+import com.google.cloud.texttospeech.v1.AudioEncoding;
+import com.google.cloud.texttospeech.v1.SsmlVoiceGender;
+import com.google.cloud.texttospeech.v1.SynthesisInput;
+import com.google.cloud.texttospeech.v1.SynthesizeSpeechResponse;
+import com.google.cloud.texttospeech.v1.TextToSpeechClient;
+import com.google.cloud.texttospeech.v1.VoiceSelectionParams;
+
 // [START gae_java11_helloworld]
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -44,7 +52,8 @@ public class SpringbootApplication {
   private static final Logger logger = Logger.getLogger(SpringbootApplication.class.getName());
   private static final String CF_PUBLISH_TOPIC = "hello-world-sub";
   private static final String PROJECT_ID = "gcloud-dpe";
-  private static final String DEFAULT_TARGET_LOCALE = "ta";
+  private static final String TEXT_LOCALE_TAMIL = "ta";
+  private static final String SPEECH_LOCALE_TAMIL = "ta-IN";
   private static final Translate translationService = TranslateOptions.getDefaultInstance().getService();
   private static final TranslateOption NMT_MODEL = Translate.TranslateOption.model("nmt");
 
@@ -73,11 +82,41 @@ public class SpringbootApplication {
   public ChatMessage translate(@RequestBody ChatMessage chatMessage) {
     Translation translation = translationService.translate(chatMessage.getMessage(),
         Translate.TranslateOption.sourceLanguage(chatMessage.getLocale()),
-        Translate.TranslateOption.targetLanguage(DEFAULT_TARGET_LOCALE), NMT_MODEL);
+        Translate.TranslateOption.targetLanguage(TEXT_LOCALE_TAMIL), NMT_MODEL);
     String tranlatedMessage = translation.getTranslatedText();
+    AudioMessage translatedAudioMessage = textToSpeech(tranlatedMessage, SPEECH_LOCALE_TAMIL);
     logger.log(Level.INFO, "Received message: " + chatMessage.toString());
     logger.log(Level.INFO, "Translated message: " + tranlatedMessage);
-    return new ChatMessage(tranlatedMessage, chatMessage.getLocale());
+    return new ChatMessage(tranlatedMessage, translatedAudioMessage, chatMessage.getLocale());
+  }
+
+  private AudioMessage textToSpeech(String textMessage, String language) {
+    // Instantiates a client
+    try (TextToSpeechClient textToSpeechClient = TextToSpeechClient.create()) {
+      // Set the text input to be synthesized
+      SynthesisInput input = SynthesisInput.newBuilder().setText(textMessage).build();
+
+      // Build the voice request, select the language code ("en-US") and the ssml
+      // voice gender
+      // ("neutral")
+      VoiceSelectionParams voice = VoiceSelectionParams.newBuilder().setLanguageCode(language)
+          .setSsmlGender(SsmlVoiceGender.NEUTRAL).build();
+
+      // Select the type of audio file you want returned
+      AudioConfig audioConfig = AudioConfig.newBuilder().setAudioEncoding(AudioEncoding.MP3).build();
+
+      // Perform the text-to-speech request on the text input with the selected voice
+      // parameters and
+      // audio file type
+      SynthesizeSpeechResponse response = textToSpeechClient.synthesizeSpeech(input, voice, audioConfig);
+
+      // Get the audio contents from the response
+      ByteString audioContents = response.getAudioContent();
+      return new AudioMessage(audioContents.toStringUtf8());
+    } catch (IOException ex) {
+      logger.log(Level.SEVERE, "Failed to convert text to audio: [" + textMessage + "]", ex);
+      return new AudioMessage();
+    }
   }
 
   private String getSaltString() {

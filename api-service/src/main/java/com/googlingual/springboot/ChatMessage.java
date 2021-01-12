@@ -20,11 +20,13 @@ package com.googlingual.springboot;
 public class ChatMessage {
     private String message;
     private String locale;
+    private AudioMessage audioMessage;
 
     public ChatMessage() {}
 
-    public ChatMessage(String message, String locale) {
+    public ChatMessage(String message, AudioMessage audioMessage, String locale) {
         this.message = message;
+        this.audioMessage = audioMessage;
         this.locale = locale;
     }
 
