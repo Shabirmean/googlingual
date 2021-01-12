@@ -21,6 +21,8 @@ public class ChatMessage {
     private String message;
     private String locale;
 
+    public ChatMessage() {}
+
     public ChatMessage(String message, String locale) {
         this.message = message;
         this.locale = locale;
