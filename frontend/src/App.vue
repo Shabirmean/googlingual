@@ -63,7 +63,7 @@
         return items
       },
       userIsAuthenticated () {
-        return this.$store.getters.user !== null && this.$store.getters.user !== undefined
+        return true; // this.$store.getters.user !== null && this.$store.getters.user !== undefined
       },
       onlineUsers () {
         return this.$store.getters.onlineUsers
