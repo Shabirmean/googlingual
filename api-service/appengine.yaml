@@ -18,7 +18,6 @@ runtime: java11
 
 handlers:
   - url: /.*
-    script: auto
     http_headers:
       Access-Control-Allow-Origin: "*"
 # [END gae_java11_helloworld_yaml]
