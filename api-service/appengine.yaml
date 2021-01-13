@@ -15,4 +15,9 @@
 # [START gae_java11_helloworld_yaml]
 service: googlingual-api-service
 runtime: java11
+
+handlers:
+- url: /.*
+  http_headers:
+    Access-Control-Allow-Origin: "*"
 # [END gae_java11_helloworld_yaml]

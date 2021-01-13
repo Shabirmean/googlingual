@@ -18,6 +18,7 @@
 </template>
 
 <script>
+import GooglingualApi from "@/services/api/Googlingual";
 import UserWindow from "./UserWindow.vue";
 
 export default {
@@ -51,6 +52,12 @@ export default {
   },
   methods: {
     addMessage(newMessage) {
+      const response = GooglingualApi.translate({
+        message: newMessage.body,
+        locale: 'en'
+      })
+      console.log(response);
+
       this.messages = [
         ...this.messages,
         {
