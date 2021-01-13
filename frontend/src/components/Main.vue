@@ -1,125 +1,74 @@
 <template>
-  <div>
-    <section ref="chatArea" class="chat-area">
-      <p
-        v-for="message in messages"
-        v-bind:key="message.id"
-        class="message"
-        :class="{
-          'message-out': message.author === 'me',
-          'message-in': message.author !== 'notMe',
-        }"
-      >
-        {{ message.body }}
-      </p>
-    </section>
-    <div class="chat-box">
-      <form>
-        <div class="form-group">
-          <label for="chatMessage">Your message</label>
-          <textarea
-            class="form-control rounded-0"
-            id="chatMessage"
-            rows="2"
-            cols="100"
-          ></textarea>
-          <small id="chatMessageInfo" class="form-text text-muted"
-            >We'll translate it for you</small
-          >
-          <button type="submit" class="btn btn-primary">
-            <i class="fa fa-paper-plane" aria-hidden="true"></i>
-          </button>
-        </div>
-      </form>
-    </div>
+  <div class="chat-container">
+    <UserWindow
+      :windowTheme="'left-container'"
+      :chatMessages="chatMessages"
+      :owner="'me'"
+      :avatar="'avatar-male.png'"
+      @addMessage="addMessage"
+    ></UserWindow>
+    <UserWindow
+      :windowTheme="'right-container'"
+      :chatMessages="chatMessages"
+      :owner="'notMe'"
+      :avatar="'avatar-female.png'"
+      @addMessage="addMessage"
+    ></UserWindow>
   </div>
 </template>
 
 <script>
+import UserWindow from "./UserWindow.vue";
+
 export default {
   name: "Main",
-  props: {
-    msg: String,
+  components: {
+    UserWindow,
   },
   data: () => {
     return {
-      receivedMsg: "",
-      sentMsg: "",
+      id: 4,
       messages: [
         {
           id: 1,
           body: "Welcome to the chat, I'm Bob!",
-          author: "notMe",
+          author: "me",
+          avatar: "avatar-male.png",
         },
         {
           id: 2,
           body: "Thank you Bob",
-          author: "me",
-        },
-        {
-          id: 3,
-          body: "You're most welcome",
           author: "notMe",
+          avatar: "avatar-female.png",
         },
       ],
     };
+  },
+  computed: {
+    chatMessages() {
+      return this.messages;
+    },
+  },
+  methods: {
+    addMessage(newMessage) {
+      this.messages = [
+        ...this.messages,
+        {
+          id: this.id,
+          ...newMessage,
+        },
+      ];
+      this.id += 1;
+      this.sentMsg = "";
+    },
   },
 };
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-h3 {
-  margin: 40px 0 0;
-}
-
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-
-a {
-  color: #42b983;
-}
-
-.chat-box {
-  justify-content: center;
+.chat-container {
   display: flex;
-}
-
-.chat-area {
-  /*   border: 1px solid #39403d; */
-  background: #5f6b6b;
-  height: 50vh;
-  padding: 1em;
-  overflow: auto;
-  max-width: 900px;
-  margin: 0 auto 2em auto;
-  box-shadow: 2px 2px 5px 2px rgba(0, 0, 0, 0.3);
-}
-.message {
-  width: 45%;
-  border-radius: 10px;
-  padding: 0.5em;
-  /*   margin-bottom: .5em; */
-  font-size: 0.8em;
-  text-align: left;
-  background: #eaeaff;
-  font-weight: bold;
-}
-.message-out {
-  background: #407fff;
-  color: white;
-  margin-left: 55%;
-  text-align: right;
-}
-.message-in {
-  background: #f7e2e2;
-  color: black;
+  justify-content: center;
 }
 </style>
