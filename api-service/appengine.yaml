@@ -15,10 +15,4 @@
 # [START gae_java11_helloworld_yaml]
 service: googlingual-api-service
 runtime: java11
-
-handlers:
-- url: /translate
-  static_dir: static/images
-  http_headers:
-    Access-Control-Allow-Origin: "*"
 # [END gae_java11_helloworld_yaml]

@@ -18,6 +18,10 @@
         :alt="name"
       />
     </p>
+    <audio controls :class="{ 'audio-out': !isAuthor }">
+      <source :src="message.audioMessage"/>
+      Your browser does not support the audio element.
+    </audio>
   </div>
 </template>
 
@@ -61,6 +65,7 @@ p {
 
 .message-container {
   display: flex;
+  flex-direction: column;
 }
 .message {
   width: 45%;
@@ -81,6 +86,11 @@ p {
 .message-in {
   background: #4b86fffa;
   color: white;
+}
+
+.audio-out {
+  margin-left: 55%;
+  text-align: right;
 }
 
 .image-chart {
