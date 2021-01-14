@@ -35,6 +35,7 @@ export default {
         {
           id: 1,
           body: "Welcome to the chat, I'm Bob!",
+          original: "Welcome to the chat, I'm Bob!",
           author: "me",
           avatar: "avatar-male.png",
           audioMessage: `data:audio/ogg;base64,${WANAKKAM}`,
@@ -42,6 +43,7 @@ export default {
         {
           id: 2,
           body: "Thank you Bob",
+          original: "Thank you Bob",
           author: "notMe",
           avatar: "avatar-female.png",
           audioMessage: `data:audio/ogg;base64,${WANAKKAM}`,
@@ -66,7 +68,7 @@ export default {
         return;
       }
 
-      const translatedText = response.data.message;
+      const translatedText = response.data.translated;
       const audioMessage = response.data.audioMessage.message;
       this.messages = [
         ...this.messages,
@@ -74,6 +76,7 @@ export default {
           id: this.id,
           ...newMessage,
           body: translatedText,
+          original: newMessage.body,
           audioMessage: `data:audio/ogg;base64,${audioMessage}`,
         },
       ];

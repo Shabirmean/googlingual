@@ -10,7 +10,7 @@
         :src="require(`@/assets/${avatar}`)"
         :alt="name"
       />
-      {{ message.body }}
+      {{ displayMessage }}
       <img
         v-if="!isAuthor"
         class="image-chart image-right"
@@ -18,7 +18,7 @@
         :alt="name"
       />
     </p>
-    <audio controls :class="{ 'audio-out': !isAuthor }">
+    <audio v-if="!isAuthor" controls :class="{ 'audio-out': !isAuthor }">
       <source :src="message.audioMessage"/>
       Your browser does not support the audio element.
     </audio>
@@ -50,6 +50,9 @@ export default {
     return {};
   },
   computed: {
+    displayMessage() {
+      return this.isAuthor ? this.message.original : this.message.body;
+    },
     isAuthor() {
       return this.sent;
     },
@@ -84,7 +87,7 @@ p {
   text-align: right;
 }
 .message-in {
-  background: #4b86fffa;
+  background: #27922bfa;
   color: white;
 }
 

@@ -18,20 +18,26 @@ package com.googlingual.springboot;
 
 public class ChatMessage {
   private String message;
+  private String translated;
   private String locale;
   private AudioMessage audioMessage;
 
   public ChatMessage() {
   }
 
-  public ChatMessage(String message, AudioMessage audioMessage, String locale) {
+  public ChatMessage(String message, String translated, AudioMessage audioMessage, String locale) {
     this.message = message;
+    this.translated = translated;
     this.audioMessage = audioMessage;
     this.locale = locale;
   }
 
   public String getMessage() {
     return message;
+  }
+
+  public String getTranslated() {
+    return translated;
   }
 
   public AudioMessage getAudioMessage() {
@@ -44,6 +50,10 @@ public class ChatMessage {
 
   public void setMessage(String message) {
     this.message = message;
+  }
+
+  public void setTranslated(String translated) {
+    this.translated = translated;
   }
 
   public void setAudioMessage(AudioMessage audioMessage) {
