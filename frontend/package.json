@@ -12,7 +12,8 @@
     "bootstrap": "^4.5.3",
     "bootstrap-vue": "^2.21.2",
     "core-js": "^3.6.5",
-    "vue": "^2.6.11"
+    "vue": "^2.6.11",
+    "vue-audio-recorder": "^3.0.1"
   },
   "devDependencies": {
     "@fortawesome/fontawesome-free": "^5.15.1",

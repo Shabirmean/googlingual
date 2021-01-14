@@ -1,7 +1,7 @@
 <template>
   <div :class="windowTheme">
     <ChatWindow :chatMessages="chatMessages" :owner="owner"></ChatWindow>
-    <InputArea @addMessage="addMessage"></InputArea>
+    <InputArea @addMessage="addMessage" @addAudioMessage="addAudioMessage"></InputArea>
   </div>
 </template>
 
@@ -44,6 +44,13 @@ export default {
         author: this.owner,
         avatar: this.avatar,
       });
+    },
+    addAudioMessage(audioMessage) {
+      this.$emit("addAudioMessage", {
+        body: 'Audio recording...',
+        author: this.owner,
+        avatar: this.avatar,
+      }, audioMessage);
     },
   },
 };

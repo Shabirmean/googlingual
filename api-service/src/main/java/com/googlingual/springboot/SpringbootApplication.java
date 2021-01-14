@@ -83,19 +83,26 @@ public class SpringbootApplication {
 
   @PostMapping(path = "/translate", consumes = "application/json", produces = "application/json")
   public ChatMessage translate(@RequestBody ChatMessage chatMessage) {
-    Translation translation = translationService.translate(chatMessage.getMessage(),
-        Translate.TranslateOption.sourceLanguage(chatMessage.getLocale()),
-        Translate.TranslateOption.targetLanguage(TEXT_LOCALE_TAMIL), NMT_MODEL);
-    String tranlatedMessage = translation.getTranslatedText();
-    AudioMessage translatedAudioMessage = textToSpeech(tranlatedMessage, SPEECH_LOCALE_TAMIL);
-    // try {
-    // SpeechToText.speechToText();
-    // } catch (IOException e) {
-    // e.printStackTrace();
-    // }
-    logger.log(Level.INFO, "Received message: " + chatMessage.toString());
-    logger.log(Level.INFO, "Translated message with audio: " + tranlatedMessage);
-    return new ChatMessage(chatMessage.getMessage(), tranlatedMessage, translatedAudioMessage, chatMessage.getLocale());
+    if (chatMessage.isAudioMessage()) {
+      try {
+        String tranlatedMessage = SpeechToText.speechToText(chatMessage.getAudioMessage());
+        return new ChatMessage(tranlatedMessage, tranlatedMessage, chatMessage.getAudioMessage(),
+            chatMessage.getLocale());
+      } catch (IOException e) {
+        e.printStackTrace();
+        return new ChatMessage();
+      }
+    } else {
+      Translation translation = translationService.translate(chatMessage.getMessage(),
+          Translate.TranslateOption.sourceLanguage(chatMessage.getLocale()),
+          Translate.TranslateOption.targetLanguage(TEXT_LOCALE_TAMIL), NMT_MODEL);
+      String tranlatedMessage = translation.getTranslatedText();
+      AudioMessage translatedAudioMessage = textToSpeech(tranlatedMessage, SPEECH_LOCALE_TAMIL);
+      logger.log(Level.INFO, "Received message: " + chatMessage.toString());
+      logger.log(Level.INFO, "Translated message with audio: " + tranlatedMessage);
+      return new ChatMessage(chatMessage.getMessage(), tranlatedMessage, translatedAudioMessage,
+          chatMessage.getLocale());
+    }
   }
 
   private AudioMessage textToSpeech(String textMessage, String language) {

@@ -18,7 +18,7 @@
         :alt="name"
       />
     </p>
-    <audio v-if="!isAuthor" controls :class="{ 'audio-out': !isAuthor }">
+    <audio v-if="!isAuthor || isAudio" controls :class="{ 'audio-out': !isAuthor }">
       <source :src="message.audioMessage"/>
       Your browser does not support the audio element.
     </audio>
@@ -55,6 +55,9 @@ export default {
     },
     isAuthor() {
       return this.sent;
+    },
+    isAudio() {
+      return this.message.body === 'Audio recording...';
     },
   },
   methods: {},

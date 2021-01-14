@@ -24,13 +24,40 @@
           </button>
 
           <button
+            v-if="!isRecording"
+            v-on:click="toggleRecorder"
             type="button"
-            v-on:click="recordAudio"
             class="btn btn-primary"
             style="margin:5px"
           >
             <i class="fa fa-microphone" style="font-size:18px"></i>
           </button>
+          <button
+            v-else
+            v-on:click="stopRecorder"
+            type="button"
+            class="btn btn-danger"
+            style="margin:5px"
+          >
+            <i class="fas fa-stop" style="font-size:18px"></i>
+          </button>
+          <button
+            v-if="hasRecording"
+            v-on:click="removeRecord"
+            type="button"
+            class="btn btn-secondary"
+            style="margin:5px"
+          >
+            <i class="fas fa-save" style="font-size:18px"></i>
+            <i class="fas fa-times" style="font-size:10px; margin-left:5px"></i>
+          </button>
+          <div v-if="isRecording" class="ar-recorder__duration">
+            {{ recordedTime }}
+          </div>
+          <!--audio v-if="!isRecording" controls>
+            <source :src="audioMessage.url" />
+            Your browser does not support the audio element.
+          </audio-->
         </div>
       </div>
     </form>
@@ -38,38 +65,86 @@
 </template>
 
 <script>
+import Recorder from "@/services/lib/recorder";
+import { convertTimeMMSS } from "@/services/lib/utils";
+
 export default {
   name: "InputArea",
   props: {},
   data: () => {
     return {
       message: "",
+      recorder: undefined,
+      micFailed: () => {},
+      beforeRecording: () => {},
+      pauseRecording: () => {},
+      afterRecording: (msg) => {
+        console.log(msg);
+      },
+      time: 1,
+      bitRate: 128,
+      sampleRate: 44100,
+      recordList: [],
     };
   },
-  computed: {},
+  computed: {
+    isRecording() {
+      return this.recorder.isRecording;
+    },
+    recordedTime() {
+      if (this.time && this.recorder.duration >= this.time * 60) {
+        this.stopRecorder();
+      }
+      return convertTimeMMSS(this.recorder.duration);
+    },
+    hasRecording() {
+      return this.recordList && this.recordList.length > 0;
+    },
+    audioMessage() {
+      return this.recordList && this.recordList.length > 0 && this.recordList[0];
+    },
+  },
+  created() {
+    this.recorder = this._initRecorder();
+  },
   methods: {
     addMessage() {
-      this.$emit("addMessage", this.message);
+      if (this.hasRecording) {
+        this.$emit("addAudioMessage", this.audioMessage);
+      } else {
+        this.$emit("addMessage", this.message);
+      }
+      this.recordList = [];
       this.message = "";
     },
-    recordAudio() {
-      // if (window.hasOwnProperty("webkitSpeechRecognition")) {
-      //   var recognition = new webkitSpeechRecognition();
-
-      //   recognition.continuous = false;
-      //   recognition.interimResults = false;
-      //   recognition.lang = "en-US";
-      //   recognition.start();
-
-      //   recognition.onresult = function(e) {
-      //     alert(e.results[0][0].transcript);
-      //     recognition.stop();
-      //   };
-      //   recognition.onerror = function(e) {
-      //     recognition.stop();
-      //   };
-      // }
+    toggleRecorder() {
+      this.recordList = [];
+      this.recorder.start();
     },
+    stopRecorder() {
+      if (!this.isRecording) {
+        return;
+      }
+      this.recorder.stop();
+      this.recordList = [this.recorder.lastRecord()];
+    },
+    removeRecord() {
+      this.recordList = [];
+    },
+    _initRecorder() {
+      return new Recorder({
+        beforeRecording: this.beforeRecording,
+        afterRecording: this.afterRecording,
+        pauseRecording: this.pauseRecording,
+        micFailed: this.micFailed,
+        bitRate: this.bitRate,
+        sampleRate: this.sampleRate,
+        format: "wav",
+      });
+    },
+  },
+  beforeDestroy() {
+    this.stopRecorder();
   },
 };
 </script>

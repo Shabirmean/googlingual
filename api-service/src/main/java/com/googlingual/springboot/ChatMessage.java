@@ -16,10 +16,12 @@
 
 package com.googlingual.springboot;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class ChatMessage {
+  private String locale;
   private String message;
   private String translated;
-  private String locale;
   private AudioMessage audioMessage;
 
   public ChatMessage() {
@@ -62,6 +64,10 @@ public class ChatMessage {
 
   public void setLocale(String locale) {
     this.locale = locale;
+  }
+
+  public boolean isAudioMessage() {
+    return audioMessage != null && StringUtils.isNotBlank(audioMessage.getMessage());
   }
 
   public String toString() {
