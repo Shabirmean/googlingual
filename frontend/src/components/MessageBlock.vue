@@ -57,7 +57,7 @@ export default {
       return this.sent;
     },
     isAudio() {
-      return this.message.body === 'Audio recording...';
+      return this.message.original === 'Audio recording...';
     },
   },
   methods: {},

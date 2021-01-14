@@ -34,8 +34,8 @@ export default {
   data: () => {
     return {
       id: 4,
-      messages: [
-        {
+      messages: {
+        "1": {
           id: 1,
           body: "Welcome to the chat, I'm Bob!",
           original: "Welcome to the chat, I'm Bob!",
@@ -43,7 +43,7 @@ export default {
           avatar: "avatar-male.png",
           audioMessage: `data:audio/ogg;base64,${WANAKKAM}`,
         },
-        {
+        "2": {
           id: 2,
           body: "Thank you Bob",
           original: "Thank you Bob",
@@ -51,16 +51,19 @@ export default {
           avatar: "avatar-female.png",
           audioMessage: `data:audio/ogg;base64,${WANAKKAM}`,
         },
-      ],
+      },
     };
   },
   computed: {
     chatMessages() {
-      return this.messages;
+      return Object.values(this.messages);
     },
   },
   methods: {
     async addMessage(newMessage) {
+      if (!newMessage.body) {
+        return;
+      }
       const response = await GooglingualApi.translate({
         message: newMessage.body,
         locale: "en",
@@ -73,44 +76,62 @@ export default {
 
       const translatedText = response.data.translated;
       const audioMessage = response.data.audioMessage.message;
-      this.messages = [
+      this.messages = {
         ...this.messages,
-        {
+        [this.id.toString()]: {
           id: this.id,
           ...newMessage,
           body: translatedText,
           original: newMessage.body,
           audioMessage: `data:audio/ogg;base64,${audioMessage}`,
         },
-      ];
+      };
       this.id += 1;
     },
     async addAudioMessage(newMessage, audioMessage) {
-      this.messages = [
+      if (!audioMessage || !audioMessage.url) {
+        return;
+      }
+      const pushedMessage = {
+        id: this.id,
+        ...newMessage,
+        original: newMessage.body,
+        audioMessage: audioMessage.url,
+      };
+      this.messages = {
         ...this.messages,
-        {
-          id: this.id,
-          ...newMessage,
-          original: newMessage.body,
-          audioMessage: audioMessage.url,
-        },
-      ];
+        [this.id.toString()]: pushedMessage
+      }
       this.id += 1;
 
-      let encodedAudio;
       const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64data = reader.result;
-        encodedAudio = base64data.substr(base64data.indexOf(",") + 1);
-        const toSentJson = {
-          audioMessage: {
-            message: encodedAudio,
-            locale: "en-US",
-          },
-        };
-        console.log(toSentJson);
+      reader.onloadend = async () => {
+        await this.updateTranscribedMessage(reader, pushedMessage);
       };
       await reader.readAsDataURL(audioMessage.blob);
+    },
+    async updateTranscribedMessage(reader, pushedMessage) {
+      const base64data = reader.result;
+      const encodedAudio = base64data.substr(base64data.indexOf(",") + 1);
+      const toSentJson = {
+        audioMessage: {
+          message: encodedAudio,
+          locale: "en-US",
+        },
+      };
+
+      const response = await GooglingualApi.translate(toSentJson);
+      if (response.status !== 200 || !response.data) {
+        alert("Failed to translate audio message");
+        return;
+      }
+      this.messages = {
+        ...this.messages,
+        [pushedMessage.id]: {
+          ...this.messages[pushedMessage.id],
+          body: response.data.translated,
+        }
+      };
     },
   },
 };

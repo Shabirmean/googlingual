@@ -89,7 +89,7 @@ export default {
   },
   computed: {
     isRecording() {
-      return this.recorder.isRecording;
+      return this.recorder && this.recorder.isRecording;
     },
     recordedTime() {
       if (this.time && this.recorder.duration >= this.time * 60) {

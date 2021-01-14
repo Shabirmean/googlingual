@@ -29,7 +29,7 @@ export default class {
     this._duration = 0
   }
 
-  start () {
+  async start () {
     const constraints = {
       video: false,
       audio: {
@@ -38,12 +38,21 @@ export default class {
       }
     }
 
-    this.beforeRecording && this.beforeRecording('start recording')
-
+    this.beforeRecording && this.beforeRecording('start recording');
     navigator.mediaDevices
              .getUserMedia(constraints)
              .then(this._micCaptured.bind(this))
-             .catch(this._micError.bind(this))
+             .catch(this._micError.bind(this));
+
+    let selectedDevice;
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    devices.forEach((device) => {
+      if (device.deviceId === 'default') {
+        selectedDevice = device;
+      }
+    });
+    this.encoderOptions.sampleRate = selectedDevice.label.includes('Bluetooth') ? 16000 : 44100;
+    // console.log(`Selected device:\n\tKind: ${selectedDevice.kind}\n\tLabel: ${selectedDevice.label}`);
 
     this.isPause     = false
     this.isRecording = true

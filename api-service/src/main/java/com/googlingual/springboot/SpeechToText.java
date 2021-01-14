@@ -26,7 +26,7 @@ public class SpeechToText {
 
       // Builds the sync recognize request
       RecognitionConfig config = RecognitionConfig.newBuilder().setEncoding(AudioEncoding.LINEAR16)
-          .setSampleRateHertz(16000).setLanguageCode("en-US").build();
+          .setLanguageCode("en-US").build();
       RecognitionAudio audio = RecognitionAudio.newBuilder().setContent(byteContent).build();
 
       // Performs speech recognition on the audio file
