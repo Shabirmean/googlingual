@@ -88,6 +88,11 @@ public class SpringbootApplication {
         Translate.TranslateOption.targetLanguage(TEXT_LOCALE_TAMIL), NMT_MODEL);
     String tranlatedMessage = translation.getTranslatedText();
     AudioMessage translatedAudioMessage = textToSpeech(tranlatedMessage, SPEECH_LOCALE_TAMIL);
+    try {
+      SpeechToText.speechToText();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
     logger.log(Level.INFO, "Received message: " + chatMessage.toString());
     logger.log(Level.INFO, "Translated message with audio: " + tranlatedMessage);
     return new ChatMessage(tranlatedMessage, translatedAudioMessage, chatMessage.getLocale());
