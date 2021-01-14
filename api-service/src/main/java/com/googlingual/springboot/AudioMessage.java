@@ -7,6 +7,10 @@ public class AudioMessage {
   public AudioMessage() {
   }
 
+  public AudioMessage(String message) {
+    this(message, "en-US");
+  }
+
   public AudioMessage(String message, String locale) {
     this.message = message;
     this.locale = locale;
