@@ -16,61 +16,66 @@
 
 package com.googlingual.springboot;
 
+import java.util.UUID;
+
 import org.apache.commons.lang3.StringUtils;
 
 public class ChatMessage {
-  private String locale;
-  private String message;
-  private String translated;
-  private AudioMessage audioMessage;
+  private UUID roomId;
+  private Author author;
+  private TextMessage text;
+  private AudioMessage audio;
 
   public ChatMessage() {
   }
 
-  public ChatMessage(String message, String translated, AudioMessage audioMessage, String locale) {
-    this.message = message;
-    this.translated = translated;
-    this.audioMessage = audioMessage;
-    this.locale = locale;
+  public ChatMessage(UUID roomId, Author author, TextMessage text, AudioMessage audio) {
+    this.roomId = roomId;
+    this.author = author;
+    this.text = text;
+    this.audio = audio;
   }
 
-  public String getMessage() {
-    return message;
+  public UUID getRoomId() {
+    return roomId;
   }
 
-  public String getTranslated() {
-    return translated;
+  public void setRoomId(UUID roomId) {
+    this.roomId = roomId;
   }
 
-  public AudioMessage getAudioMessage() {
-    return audioMessage;
+  public void setAudio(AudioMessage audio) {
+    this.audio = audio;
   }
 
-  public String getLocale() {
-    return locale;
+  public AudioMessage getAudio() {
+    return audio;
   }
 
-  public void setMessage(String message) {
-    this.message = message;
+  public void setAuthor(Author author) {
+    this.author = author;
   }
 
-  public void setTranslated(String translated) {
-    this.translated = translated;
+  public Author getAuthor() {
+    return author;
   }
 
-  public void setAudioMessage(AudioMessage audioMessage) {
-    this.audioMessage = audioMessage;
+  public TextMessage getText() {
+    return text;
   }
 
-  public void setLocale(String locale) {
-    this.locale = locale;
+  public void setText(TextMessage text) {
+    this.text = text;
   }
 
-  public boolean isAudioMessage() {
-    return audioMessage != null && StringUtils.isNotBlank(audioMessage.getMessage());
+  public boolean isAudio() {
+    return audio != null && StringUtils.isNotBlank(audio.getMessage());
   }
 
   public String toString() {
-    return new StringBuilder().append(message).append(" (").append(locale).append(")").toString();
+    return new StringBuilder().append("(\n").append("roomId").append(": ").append(roomId).append("author id")
+        .append(": ").append(author.getId()).append("author name").append(": ").append(author.getUsername())
+        .append("text").append(": ").append(text.getMessage()).append("text locale").append(": ")
+        .append(text.getLocale()).append("audio locale").append(": ").append(audio.getLocale()).toString();
   }
 }

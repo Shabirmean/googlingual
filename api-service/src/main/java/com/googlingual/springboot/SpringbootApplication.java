@@ -17,17 +17,11 @@
 package com.googlingual.springboot;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Random;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.api.client.util.Base64;
-import com.google.cloud.pubsub.v1.Publisher;
 import com.google.protobuf.ByteString;
-import com.google.pubsub.v1.ProjectTopicName;
-import com.google.pubsub.v1.PubsubMessage;
 import com.google.cloud.translate.*;
 import com.google.cloud.translate.Translate.TranslateOption;
 
@@ -43,7 +37,6 @@ import com.google.cloud.texttospeech.v1.VoiceSelectionParams;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -53,8 +46,6 @@ import org.springframework.web.bind.annotation.RestController;
 @CrossOrigin(origins = "*")
 public class SpringbootApplication {
   private static final Logger logger = Logger.getLogger(SpringbootApplication.class.getName());
-  private static final String CF_PUBLISH_TOPIC = "hello-world-sub";
-  private static final String PROJECT_ID = "gcloud-dpe";
   private static final String TEXT_LOCALE_TAMIL = "ta";
   private static final String SPEECH_LOCALE_TAMIL = "ta-IN";
   private static final Translate translationService = TranslateOptions.getDefaultInstance().getService();
@@ -64,25 +55,8 @@ public class SpringbootApplication {
     SpringApplication.run(SpringbootApplication.class, args);
   }
 
-  @GetMapping("/")
-  public String hello() {
-    ByteString byteStr = ByteString.copyFrom(getSaltString(), StandardCharsets.UTF_8);
-    PubsubMessage pubsubApiMessage = PubsubMessage.newBuilder().setData(byteStr).build();
-
-    // Attempt to publish the message
-    String responseMessage = "Hello Shabirmean is here!";
-    try {
-      Publisher publisher = Publisher.newBuilder(ProjectTopicName.of(PROJECT_ID, CF_PUBLISH_TOPIC)).build();
-      publisher.publish(pubsubApiMessage).get();
-    } catch (InterruptedException | ExecutionException | IOException e) {
-      logger.log(Level.SEVERE, "Error publishing Pub/Sub message: " + e.getMessage(), e);
-      responseMessage = "Error publishing Pub/Sub message; see logs for more info.";
-    }
-    return responseMessage;
-  }
-
   @PostMapping(path = "/translate", consumes = "application/json", produces = "application/json")
-  public ChatMessage translate(@RequestBody ChatMessage chatMessage) {
+  public Message translate(@RequestBody Message chatMessage) {
     String messageToTranslate = chatMessage.getMessage();
     if (chatMessage.isAudioMessage()) {
       try {
@@ -92,7 +66,7 @@ public class SpringbootApplication {
         // chatMessage.getLocale());
       } catch (IOException e) {
         e.printStackTrace();
-        return new ChatMessage();
+        return new Message();
       }
     }
     Translation translation = translationService.translate(messageToTranslate,
@@ -102,7 +76,7 @@ public class SpringbootApplication {
     AudioMessage translatedAudioMessage = textToSpeech(tranlatedMessage, SPEECH_LOCALE_TAMIL);
     logger.log(Level.INFO, "Received message: " + chatMessage.toString());
     logger.log(Level.INFO, "Translated message with audio: " + tranlatedMessage);
-    return new ChatMessage(chatMessage.getMessage(), tranlatedMessage, translatedAudioMessage, chatMessage.getLocale());
+    return new Message(chatMessage.getMessage(), tranlatedMessage, translatedAudioMessage, chatMessage.getLocale());
   }
 
   private AudioMessage textToSpeech(String textMessage, String language) {
@@ -133,18 +107,5 @@ public class SpringbootApplication {
       return new AudioMessage();
     }
   }
-
-  private String getSaltString() {
-    String SALTCHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
-    StringBuilder salt = new StringBuilder();
-    Random rnd = new Random();
-    while (salt.length() < 18) { // length of the random string.
-      int index = (int) (rnd.nextFloat() * SALTCHARS.length());
-      salt.append(SALTCHARS.charAt(index));
-    }
-    String saltStr = salt.toString();
-    return saltStr;
-  }
-
 }
 // [END gae_java11_helloworld]
