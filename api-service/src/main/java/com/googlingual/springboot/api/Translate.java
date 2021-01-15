@@ -1,4 +1,4 @@
-package com.googlingual.api;
+package com.googlingual.springboot.api;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/v1")
+@RequestMapping("v1")
 @CrossOrigin(origins = "*")
 public class Translate {
   private static final Logger logger = Logger.getLogger(Translate.class.getName());
