@@ -1,0 +1,11 @@
+steps:
+- name: 'gcr.io/cloud-builders/npm'
+  args: ['install']
+  dir: 'delivery-service'
+- name: 'gcr.io/cloud-builders/npm'
+  args: ['run', 'build']
+  dir: 'delivery-service'
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  args: ['gcloud', 'app', 'deploy', 'appengine.yaml', '--project=$PROJECT_ID']
+  dir: 'delivery-service'
+timeout: "1600s"
