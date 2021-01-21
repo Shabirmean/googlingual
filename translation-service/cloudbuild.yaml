@@ -1,0 +1,5 @@
+steps:
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  args: ['gcloud', 'functions', 'deploy', 'translation-service', '--entry-point', 'com.googlingual.services.translation.InitTranslation', '--runtime', 'java11', '--trigger-topic', 'new-stored-message']
+  dir: 'translation-service'
+timeout: "1600s"
