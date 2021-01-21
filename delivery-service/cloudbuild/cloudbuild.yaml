@@ -1,5 +1,5 @@
 steps:
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  args: ['gcloud', 'app', 'deploy', 'appengine/appengine.yaml', '--project=$PROJECT_ID']
+  args: ['gcloud', 'app', 'deploy', 'appengine.yaml', '--project=$PROJECT_ID']
   dir: 'delivery-service'
 timeout: "1600s"
