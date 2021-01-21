@@ -34,10 +34,15 @@ public class InitMessage implements BackgroundFunction<PubSubMessage> {
   private static final String CLOUD_SQL_CONNECTION_NAME = "gcloud-dpe:us-central1:gsp-shabirmean";
   private static final String DB_USER = "root";
   private static final String DB_PASS = "7o0fafvczzmFl8Lg";
+  private static final String LOCALE_EN = "en";
+  private static final String AUDIO_EN_US = "en-US";
+  private static final String MSG_INDEX_CLOUMN = "msg_index";
+  private static final String NEW_STORED_MESSAGE_TOPIC = "new-stored-message";
+  private static final String PROJECT_GCLOUD_DPE = "gcloud-dpe";
   private static final int DEFAULT_SQL_POOL_SIZE = 10;
   private static DataSource pool = null;
 
-  private static Connection getConnection(int poolSize) throws SQLException {
+  private static Connection getConnection() throws SQLException {
     if (pool == null) {
       HikariConfig config = new HikariConfig();
       config.setJdbcUrl(String.format("jdbc:mysql:///%s", DB_NAME));
@@ -46,7 +51,7 @@ public class InitMessage implements BackgroundFunction<PubSubMessage> {
       config.addDataSourceProperty("socketFactory", "com.google.cloud.sql.mysql.SocketFactory");
       config.addDataSourceProperty("cloudSqlInstance", CLOUD_SQL_CONNECTION_NAME);
       config.addDataSourceProperty("ipTypes", "PRIVATE");
-      config.setMaximumPoolSize(poolSize);
+      config.setMaximumPoolSize(DEFAULT_SQL_POOL_SIZE);
       pool = new HikariDataSource(config);
     }
     return pool.getConnection();
@@ -62,7 +67,7 @@ public class InitMessage implements BackgroundFunction<PubSubMessage> {
     Connection connection = null;
 
     try {
-      connection = getConnection(DEFAULT_SQL_POOL_SIZE);
+      connection = getConnection();
       connection.setAutoCommit(false);
       PreparedStatement getLastMsgIndexStmt = connection.prepareStatement(LAST_INDEX_QUERY);
       PreparedStatement insertMessageStmt = connection.prepareStatement(INSERT_MESSAGE_QUERY);
@@ -72,13 +77,13 @@ public class InitMessage implements BackgroundFunction<PubSubMessage> {
       String message = chatMessage.getText() != null ? chatMessage.getText().getMessage() : null;
       String audioMessage = chatMessage.isAudio() ? chatMessage.getAudio().getMessage() : null;
       String messageLocale =
-          chatMessage.getText() != null ? chatMessage.getText().getLocale() : "en";
-      String audioLocale = chatMessage.isAudio() ? chatMessage.getAudio().getLocale() : "en-US";
+          chatMessage.getText() != null ? chatMessage.getText().getLocale() : LOCALE_EN;
+      String audioLocale = chatMessage.isAudio() ? chatMessage.getAudio().getLocale() : AUDIO_EN_US;
 
       getLastMsgIndexStmt.setString(1, chatRoomId);
       getLastMsgIndexStmt.setBoolean(2, true);
       ResultSet rs = getLastMsgIndexStmt.executeQuery();
-      int nextIndex = rs.next() ? rs.getInt("msg_index") + 1 : 0;
+      int nextIndex = rs.next() ? rs.getInt(MSG_INDEX_CLOUMN) + 1 : 0;
       rs.close();
 
       insertMessageStmt.setString(1, newMessageId);
@@ -119,7 +124,7 @@ public class InitMessage implements BackgroundFunction<PubSubMessage> {
     PubsubMessage pubsubApiMessage = PubsubMessage.newBuilder().setData(byteStr).build();
     try {
       Publisher publisher = Publisher.newBuilder(
-          ProjectTopicName.of("gcloud-dpe", "new-stored-message")).build();
+          ProjectTopicName.of(PROJECT_GCLOUD_DPE, NEW_STORED_MESSAGE_TOPIC)).build();
       publisher.publish(pubsubApiMessage).get();
       publisher.shutdown();
     } catch (IOException | InterruptedException | ExecutionException e) {
