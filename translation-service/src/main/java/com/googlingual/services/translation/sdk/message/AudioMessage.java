@@ -1,4 +1,4 @@
-package com.googlingual.springboot;
+package com.googlingual.services.translation.sdk.message;
 
 public class AudioMessage {
   private static final String DEFAULT_LOCALE = "en-US";

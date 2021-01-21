@@ -1,4 +1,4 @@
-package com.googlingual.springboot;
+package com.googlingual.services.translation.sdk.message;
 
 import java.util.UUID;
 

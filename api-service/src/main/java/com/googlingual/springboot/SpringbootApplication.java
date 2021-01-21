@@ -16,6 +16,7 @@
 
 package com.googlingual.springboot;
 
+import com.googlingual.springboot.sdk.AudioMessage;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -61,9 +62,6 @@ public class SpringbootApplication {
     if (chatMessage.isAudioMessage()) {
       try {
         messageToTranslate = SpeechToText.speechToText(chatMessage.getAudioMessage());
-        // return new ChatMessage(tranlatedMessage, tranlatedMessage,
-        // chatMessage.getAudioMessage(),
-        // chatMessage.getLocale());
       } catch (IOException e) {
         e.printStackTrace();
         return new Message();

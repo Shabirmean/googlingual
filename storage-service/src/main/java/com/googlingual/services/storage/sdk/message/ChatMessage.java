@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-package com.googlingual.springboot;
+package com.googlingual.services.storage.sdk.message;
 
+import com.google.gson.Gson;
 import java.util.UUID;
-
 import org.apache.commons.lang3.StringUtils;
 
 public class ChatMessage {
+
   private UUID roomId;
   private Author author;
   private TextMessage text;
   private AudioMessage audio;
+  private static final Gson GSON_PARSER = new Gson();
 
   public ChatMessage() {
   }
@@ -72,10 +74,21 @@ public class ChatMessage {
     return audio != null && StringUtils.isNotBlank(audio.getMessage());
   }
 
+  public String getJsonString() {
+    return GSON_PARSER.toJson(this);
+  }
+
   public String toString() {
-    return new StringBuilder().append("(\n").append("roomId").append(": ").append(roomId).append("author id")
-        .append(": ").append(author.getId()).append("author name").append(": ").append(author.getUsername())
+    return new StringBuilder().append("(\n").append("roomId").append(": ").append(roomId)
+        .append("author id")
+        .append(": ").append(author.getId()).append("author name").append(": ")
+        .append(author.getUsername())
         .append("text").append(": ").append(text.getMessage()).append("text locale").append(": ")
-        .append(text.getLocale()).append("audio locale").append(": ").append(audio.getLocale()).toString();
+        .append(text.getLocale()).append("audio locale").append(": ").append(isAudio() ? audio.getLocale() : "")
+        .toString();
+  }
+
+  public static ChatMessage fromJsonString(String jsonMessage) {
+    return GSON_PARSER.fromJson(jsonMessage, ChatMessage.class);
   }
 }

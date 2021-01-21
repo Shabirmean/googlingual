@@ -9,6 +9,7 @@ import com.google.cloud.speech.v1.SpeechClient;
 import com.google.cloud.speech.v1.SpeechRecognitionAlternative;
 import com.google.cloud.speech.v1.SpeechRecognitionResult;
 
+import com.googlingual.springboot.sdk.AudioMessage;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.List;

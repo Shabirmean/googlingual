@@ -16,6 +16,7 @@
 
 package com.googlingual.springboot;
 
+import com.googlingual.springboot.sdk.AudioMessage;
 import org.apache.commons.lang3.StringUtils;
 
 public class Message {
