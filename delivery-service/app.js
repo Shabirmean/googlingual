@@ -66,7 +66,7 @@ const subscriptionName = 'projects/gcloud-dpe/subscriptions/delivery-service-sub
 const timeout = 60;
 const pubSubClient = new PubSub();
 
-function listenForMessages() {
+function listenForMessages(socketsMap) {
   console.log("Registering subscriber....");
   const subscription = pubSubClient.subscription(subscriptionName);
 
@@ -77,11 +77,14 @@ function listenForMessages() {
     console.log(`\tAttributes: ${message.attributes}`);
     messageCount += 1;
     message.ack();
+
+    console.log('ALL THE KEYS: ', Object.keys(socketsMap));
+
     if (socketsMap[message.data]) {
-      console.log('Socket found..', message);
-      socketsMap[message.data].emit('chatRoomMessage', message);
+      console.log('Socket found..', message.data);
+      socketsMap[message.data].emit('chatRoomMessage', message.data);
     } else {
-      console.log('No socket found for message', message);
+      console.log('No socket found for message', message.data);
     }
   };
 
@@ -94,7 +97,7 @@ function listenForMessages() {
 
 if (module === require.main) {
   console.log("Starting node app....");
-  listenForMessages();
+  listenForMessages(socketsMap);
 
   const PORT = process.env.PORT || 8081;
   server.listen(PORT, () => {
