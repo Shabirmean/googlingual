@@ -29,13 +29,25 @@ import java.util.logging.Logger;
 import javax.sql.DataSource;
 
 public class InitTranslation implements BackgroundFunction<PubSubMessage> {
+
   private static final Logger logger = Logger.getLogger(InitTranslation.class.getName());
   private static final String DB_NAME = "googlingual";
   private static final String CLOUD_SQL_CONNECTION_NAME = "gcloud-dpe:us-central1:gsp-shabirmean";
   private static final String DB_USER = "root";
   private static final String DB_PASS = "7o0fafvczzmFl8Lg";
   private static final int DEFAULT_SQL_POOL_SIZE = 10;
+  private static final String PROJECT_GCLOUD_DPE = "gcloud-dpe";
   private static DataSource pool = null;
+  private static final Map<String, Publisher> publisherMap = new HashMap<>();
+
+  private static Publisher getPublisher(String topic) throws IOException {
+    Publisher publisher = publisherMap.get(topic);
+    if (publisher == null) {
+      publisher = Publisher.newBuilder(ProjectTopicName.of(PROJECT_GCLOUD_DPE, topic)).build();
+      publisherMap.put(topic, publisher);
+    }
+    return publisher;
+  }
 
   private static Connection getConnection(int poolSize) throws SQLException {
     if (pool == null) {
@@ -105,7 +117,6 @@ public class InitTranslation implements BackgroundFunction<PubSubMessage> {
         se.printStackTrace();
       }
     }
-
   }
 
   private void forwardToSpeechToTextService(MessageDao messageDao) {
@@ -113,8 +124,7 @@ public class InitTranslation implements BackgroundFunction<PubSubMessage> {
     ByteString byteStr = ByteString.copyFrom(publishMessage, StandardCharsets.UTF_8);
     PubsubMessage pubsubApiMessage = PubsubMessage.newBuilder().setData(byteStr).build();
     try {
-      Publisher publisher = Publisher.newBuilder(
-          ProjectTopicName.of("gcloud-dpe", "new-speech-to-text-message")).build();
+      Publisher publisher = getPublisher("new-speech-to-text-message");
       publisher.publish(pubsubApiMessage).get();
       publisher.shutdown();
     } catch (IOException | InterruptedException | ExecutionException e) {
@@ -127,8 +137,7 @@ public class InitTranslation implements BackgroundFunction<PubSubMessage> {
     ByteString byteStr = ByteString.copyFrom(publishMessage, StandardCharsets.UTF_8);
     PubsubMessage pubsubApiMessage = PubsubMessage.newBuilder().setData(byteStr).build();
     try {
-      Publisher publisher = Publisher.newBuilder(
-          ProjectTopicName.of("gcloud-dpe", "new-text-to-text-message")).build();
+      Publisher publisher = getPublisher("new-text-to-text-message");
       publisher.publish(pubsubApiMessage).get();
       publisher.shutdown();
     } catch (IOException | InterruptedException | ExecutionException e) {

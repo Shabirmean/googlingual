@@ -4,6 +4,7 @@ import static com.googlingual.services.t2s.util.SqlConstants.UPDATE_MESSAGE_QUER
 
 import com.google.cloud.functions.BackgroundFunction;
 import com.google.cloud.functions.Context;
+import com.google.cloud.pubsub.v1.Publisher;
 import com.google.cloud.texttospeech.v1.AudioConfig;
 import com.google.cloud.texttospeech.v1.AudioEncoding;
 import com.google.cloud.texttospeech.v1.SsmlVoiceGender;
@@ -12,17 +13,22 @@ import com.google.cloud.texttospeech.v1.SynthesizeSpeechResponse;
 import com.google.cloud.texttospeech.v1.TextToSpeechClient;
 import com.google.cloud.texttospeech.v1.VoiceSelectionParams;
 import com.google.protobuf.ByteString;
+import com.google.pubsub.v1.ProjectTopicName;
+import com.google.pubsub.v1.PubsubMessage;
 import com.googlingual.services.t2s.TextToSpeech.PubSubMessage;
 import com.googlingual.services.t2s.sdk.dao.MessageDao;
 import com.googlingual.services.t2s.sdk.pubsub.PubSubExchangeMessage;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.sql.DataSource;
@@ -34,8 +40,19 @@ public class TextToSpeech implements BackgroundFunction<PubSubMessage> {
   private static final String CLOUD_SQL_CONNECTION_NAME = "gcloud-dpe:us-central1:gsp-shabirmean";
   private static final String DB_USER = "root";
   private static final String DB_PASS = "7o0fafvczzmFl8Lg";
+  private static final String PROJECT_GCLOUD_DPE = "gcloud-dpe";
   private static final int DEFAULT_SQL_POOL_SIZE = 10;
   private static DataSource pool = null;
+  private static final Map<String, Publisher> publisherMap = new HashMap<>();
+
+  private static Publisher getPublisher(String topic) throws IOException {
+    Publisher publisher = publisherMap.get(topic);
+    if (publisher == null) {
+      publisher = Publisher.newBuilder(ProjectTopicName.of(PROJECT_GCLOUD_DPE, topic)).build();
+      publisherMap.put(topic, publisher);
+    }
+    return publisher;
+  }
 
   private static Connection getConnection(int poolSize) throws SQLException {
     if (pool == null) {
@@ -90,7 +107,7 @@ public class TextToSpeech implements BackgroundFunction<PubSubMessage> {
       updateMessageQuery.close();
       logger.info(String.format("Inserted translated audio for message [id: %s]\n[lang: %s]\n[%s]",
           messageDao.getId(), destinationLocale, encodedMessage));
-
+      publishTranslatedMessage(exchangeMessage);
     } catch (IOException | SQLException ex) {
       logger.log(Level.SEVERE, "Failed to convert text to audio: [" + textToBeMadeAudio + "]", ex);
     } finally {
@@ -102,6 +119,19 @@ public class TextToSpeech implements BackgroundFunction<PubSubMessage> {
       } catch (SQLException se) {
         se.printStackTrace();
       }
+    }
+  }
+
+  private void publishTranslatedMessage(PubSubExchangeMessage exchangeMessage) {
+    String publishMessage = exchangeMessage.getJsonString();
+    ByteString byteStr = ByteString.copyFrom(publishMessage, StandardCharsets.UTF_8);
+    PubsubMessage pubsubApiMessage = PubsubMessage.newBuilder().setData(byteStr).build();
+    try {
+      Publisher publisher = getPublisher("new-translated-message");
+      publisher.publish(pubsubApiMessage).get();
+      publisher.shutdown();
+    } catch (IOException | InterruptedException | ExecutionException e) {
+      e.printStackTrace();
     }
   }
 

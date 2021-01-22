@@ -21,6 +21,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -41,6 +42,16 @@ public class InitMessage implements BackgroundFunction<PubSubMessage> {
   private static final String PROJECT_GCLOUD_DPE = "gcloud-dpe";
   private static final int DEFAULT_SQL_POOL_SIZE = 10;
   private static DataSource pool = null;
+  private static final Map<String, Publisher> publisherMap = new HashMap<>();
+
+  private static Publisher getPublisher(String topic) throws IOException {
+    Publisher publisher = publisherMap.get(topic);
+    if (publisher == null) {
+      publisher = Publisher.newBuilder(ProjectTopicName.of(PROJECT_GCLOUD_DPE, topic)).build();
+      publisherMap.put(topic, publisher);
+    }
+    return publisher;
+  }
 
   private static Connection getConnection() throws SQLException {
     if (pool == null) {
@@ -123,8 +134,7 @@ public class InitMessage implements BackgroundFunction<PubSubMessage> {
     ByteString byteStr = ByteString.copyFrom(publishMessage, StandardCharsets.UTF_8);
     PubsubMessage pubsubApiMessage = PubsubMessage.newBuilder().setData(byteStr).build();
     try {
-      Publisher publisher = Publisher.newBuilder(
-          ProjectTopicName.of(PROJECT_GCLOUD_DPE, NEW_STORED_MESSAGE_TOPIC)).build();
+      Publisher publisher = getPublisher(NEW_STORED_MESSAGE_TOPIC);
       publisher.publish(pubsubApiMessage).get();
       publisher.shutdown();
     } catch (IOException | InterruptedException | ExecutionException e) {

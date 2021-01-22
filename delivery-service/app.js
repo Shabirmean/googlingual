@@ -15,6 +15,7 @@
 'use strict';
 
 const {PubSub} = require('@google-cloud/pubsub');
+const mysql = require('promise-mysql');
 const express = require('express');
 const path = require('path');
 const app = express();
@@ -57,7 +58,6 @@ io.on('disconnect', socket => {
   cleanUpSocketReferences(socket);
 });
 
-
 function cleanUpSocketReferences(socket) {
   delete socketsMap[socket.id];         // delete reference to socket info
   delete socketIdToUserMap[socket.id];  // delete socket to use binding
@@ -72,14 +72,46 @@ function cleanUpSocketReferences(socket) {
   }
 }
 
+const createPool = async () => {
+  const config = {
+    connectionLimit: 5,
+    connectTimeout: 10000, // 10 seconds
+    acquireTimeout: 10000, // 10 seconds
+    waitForConnections: true, // Default: true
+    queueLimit: 0, // Default: 0
+  };
+  return await createTcpPool(config);
+};
+
+const createPoolAndEnsureSchema = async () => await createPool();
+let pool;
+
 function listenForMessages(socketsMap) {
   console.log("Registering subscriber....");
   const subscription = pubSubClient.subscription(subscriptionName);
   subscription.on('message', handlePubSubMessage);
 }
 
-function handlePubSubMessage(message) {
+async function handlePubSubMessage(message) {
   const payload = message.data;
+  const chatRoom = payload.message.chatRoomId;
+  pool = pool || (await createPoolAndEnsureSchema());
+  try {
+    const stmt = `SELECT
+       BIN_TO_UUID(user_id),
+       message_locale,
+       audio_locale ,
+       user_id
+      FROM roomusers
+      WHERE chatroom_id = UUID_TO_BIN(?);`;
+    const roomUsersQuery = pool.query(stmt, [chatRoom]);
+    const roomUsers = await roomUsersQuery;
+    console.log('Response from mysql');
+    console.log(roomUsersQuery);
+  } catch (err) {
+    logger.error(err);
+  }
+
   console.log(`Received message ${message.id}:\n
     \tData: ${payload}\n
     \tAttributes: ${message.attributes}`
@@ -92,6 +124,19 @@ function handlePubSubMessage(message) {
   }
   message.ack();
 }
+
+const createTcpPool = async config => {
+  return await mysql.createPool({
+    user: 'root', // process.env.DB_USER, // e.g. 'my-db-user'
+    password: '7o0fafvczzmFl8Lg', //process.env.DB_PASS, // e.g. 'my-db-password'
+    database: 'googlingual', // process.env.DB_NAME, // e.g. 'my-database'
+    host: '10.114.49.3', // dbSocketAddr[0], // e.g. '127.0.0.1'
+    port: '3306', // e.g. '3306'
+    // ... Specify additional properties here.
+    ...config,
+  });
+};
+
 
 if (module === require.main) {
   console.log("Starting node app....");

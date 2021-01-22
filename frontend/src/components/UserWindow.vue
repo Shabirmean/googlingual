@@ -52,8 +52,12 @@ export default {
       console.log(`User registration message:`, data);
     },
     chatRoomMessage(message) {
-      console.log('Received socket message');
       console.log(message);
+      const decoded = new TextDecoder("utf-8");
+      const payload = decoded.decode(message);
+      console.log(`Received socket message:`);
+      console.log(payload);
+      // console.log(String.fromCharCode.apply(null, new Uint8Array(message)));
     }
   },
   methods: {
