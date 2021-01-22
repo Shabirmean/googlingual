@@ -98,6 +98,7 @@ public class TextToSpeech implements BackgroundFunction<PubSubMessage> {
       String encodedMessage = com.google.api.client.util.Base64.encodeBase64String(audioContents.toByteArray());
 
       connection = getConnection(DEFAULT_SQL_POOL_SIZE);
+      connection.setAutoCommit(false);
       PreparedStatement updateMessageQuery = connection.prepareStatement(UPDATE_MESSAGE_QUERY);
       updateMessageQuery.setString(1, encodedMessage);
       updateMessageQuery.setString(2, destinationLocale);

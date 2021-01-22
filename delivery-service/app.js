@@ -112,16 +112,17 @@ async function handlePubSubMessage(message) {
   pool = pool || (await createPoolAndEnsureSchema());
   try {
     const stmt = `SELECT
-       BIN_TO_UUID(user_id),
+       BIN_TO_UUID(user_id) user_id,
        message_locale,
-       audio_locale ,
-       user_id
+       audio_locale
       FROM roomusers
       WHERE chatroom_id = UUID_TO_BIN(?);`;
     const roomUsersQuery = pool.query(stmt, [chatRoom]);
     const roomUsers = await roomUsersQuery;
     console.log('Response from mysql');
-    console.log(roomUsersQuery);
+    roomUsers.array.forEach(res => {
+      console.log(`User: ${res.user_id}`);
+    });
   } catch (err) {
     logger.error(err);
   }
