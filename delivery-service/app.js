@@ -93,18 +93,20 @@ function listenForMessages(socketsMap) {
 }
 
 async function handlePubSubMessage(message) {
-  const payload = message.data;
+  const payload = JSON.parse(message.data);
   console.log(`Received message ${message.id}:\n
     \tData: ${payload}\n
     \tAttributes: ${message.attributes}`
   );
   if (socketsMap[message.data]) {
-    console.log(`Socket found for sId: ${payload}`);
+    console.log(`Socket found for sId: ${payload.message.id}`);
     socketsMap[message.data].emit('chatRoomMessage', payload);
   } else {
-    console.log(`No socket found for message ${payload}`);
+    console.log(`No socket found for message ${payload.message.id}`);
   }
   message.ack();
+
+
 
   const chatRoom = payload.message.chatRoomId;
   pool = pool || (await createPoolAndEnsureSchema());
