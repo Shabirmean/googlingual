@@ -20,6 +20,7 @@
 </template>
 
 <script>
+// import io from 'socket.io-client';
 import GooglingualApi from "@/services/api/Googlingual";
 import UserWindow from "./UserWindow.vue";
 
@@ -52,8 +53,14 @@ export default {
           audioMessage: `data:audio/ogg;base64,${WANAKKAM}`,
         },
       },
+      // socket : io('127.0.0.1:8081')
     };
   },
+  // mounted() {
+  //   this.socket.on('chat message', (data) => {
+  //     console.log(data);
+  //   });
+  // },
   computed: {
     chatMessages() {
       return Object.values(this.messages);
@@ -133,6 +140,22 @@ export default {
         }
       };
     },
+  },
+  sockets: {
+    connect() {
+      console.log('Connected to sockets server');
+      // this.isConnected = true;
+    },
+
+    disconnect() {
+      console.log('Disconnected from sockets server');
+      // this.isConnected = false;
+    },
+
+    // Fired when the server sends something on the "messageChannel" channel.
+    messageChannel(data) {
+      console.log(data);
+    }
   },
 };
 </script>

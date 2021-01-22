@@ -19,20 +19,24 @@ const app = require('express')();
 app.set('view engine', 'pug');
 
 const server = require('http').Server(app);
-const io = require('socket.io')(server);
+const io = require('socket.io')(server, {
+  cors: {
+    origin: '*',
+  }
+});
 
 app.get('/', (req, res) => {
   res.render('index.pug');
 });
 
 io.on('connection', socket => {
-  socket.on('chat message', msg => {
-    io.emit('chat message', msg);
+  socket.on('messageChannel', msg => {
+    io.emit('messageChannel', msg);
   });
 });
 
 if (module === require.main) {
-  const PORT = process.env.PORT || 8080;
+  const PORT = process.env.PORT || 8081;
   server.listen(PORT, () => {
     console.log(`App listening on port ${PORT}`);
     console.log('Press Ctrl+C to quit.');
