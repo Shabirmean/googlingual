@@ -75,17 +75,18 @@ function listenForMessages(socketsMap) {
   const subscription = pubSubClient.subscription(subscriptionName);
 
   const messageHandler = message => {
+    const payload = message.data;
     console.log(`Received message ${message.id}:`);
-    console.log(`\tData: ${message.data}`);
+    console.log(`\tData: ${payload}`);
     console.log(`\tAttributes: ${message.attributes}`);
     Object.keys(socketsMap).forEach(function(key) {
       console.log(`Found sockId: ${key}`);
     });
     if (socketsMap[message.data]) {
-      console.log(`Socket found for sId: ${message.data}`);
-      socketsMap[message.data].emit('chatRoomMessage', 'shabirmean');
+      console.log(`Socket found for sId: ${payload}`);
+      socketsMap[message.data].emit('chatRoomMessage', payload);
     } else {
-      console.log(`No socket found for message ${message.data}`);
+      console.log(`No socket found for message ${payload}`);
     }
     message.ack();
   };
