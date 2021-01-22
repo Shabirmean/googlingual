@@ -25,9 +25,9 @@ const io = require('socket.io')(server, {
   }
 });
 
-const socketsMap = {};
-const socketIdToUserMap = {};
-const userToSocketIdMap = {};
+const socketsMap = {};          // socketId to sockets
+const socketIdToUserMap = {};   // sockerId to userId
+const userToSocketIdsMap = {};  // userId socketIdList
 
 app.set('view engine', 'pug');
 app.use("/assets", express.static(path.join(__dirname, 'assets')));
@@ -40,25 +40,29 @@ io.on('connection', socket => {
   socketsMap[socket.id] = socket;
   socket.on('newSocketConnection', data => {
     console.log(data);
-    const connectionId = data.sId;
+    const socketId = data.sId;
     const userId = data.uId;
-    if (!socketsMap[connectionId]) {
+    if (!socketsMap[socketId]) {
       return;
     }
-    const existingConnections = userToSocketIdMap[userId] || [];
-    userToSocketIdMap[userId] = [ ...existingConnections, connectionId];
-    socketIdToUserMap[connectionId] = userId;
+    const existingConnections = userToSocketIdsMap[userId] || [];
+    userToSocketIdsMap[userId] = [ ...existingConnections, socketId];
+    socketIdToUserMap[socketId] = userId;
     io.emit('userRegistered', data);
   });
 });
 
 io.on('disconnect', socket => {
-  delete socketsMap[socket.id];
-  const socketUser = socketIdToUserMap[socket.id];
-  const userSockets = socketIdToUserMap[socketUser];
-  const socketIndex = userSockets.indexOf(socket.id);
+  delete socketsMap[socket.id];         // delete reference to socket info
+  delete socketIdToUserMap[socket.id];  // delete socket to use binding
+  const userId = socketIdToUserMap[socket.id];
+  const socketList = userToSocketIdsMap[userId];
+  const socketIndex = socketList.indexOf(socket.id);
   if (socketIndex > -1) {
-    userSockets.splice(socketIndex, 1);
+    socketList.splice(socketIndex, 1);  // remove socket for user's list
+  }
+  if (userToSocketIdsMap[userId].length == 0) {
+    delete userToSocketIdsMap[userId];   // remove user since has 0 connections
   }
 });
 
@@ -70,29 +74,22 @@ function listenForMessages(socketsMap) {
   console.log("Registering subscriber....");
   const subscription = pubSubClient.subscription(subscriptionName);
 
-  let messageCount = 0;
   const messageHandler = message => {
     console.log(`Received message ${message.id}:`);
     console.log(`\tData: ${message.data}`);
     console.log(`\tAttributes: ${message.attributes}`);
-    messageCount += 1;
-    message.ack();
-
-    console.log('ALL THE KEYS: ', Object.keys(socketsMap));
-
+    Object.keys(socketsMap).forEach(function(key) {
+      console.log(`Found sockId: ${key}`);
+    });
     if (socketsMap[message.data]) {
-      console.log('Socket found..', message.data);
+      console.log(`Socket found for sId: ${message.data}`);
       socketsMap[message.data].emit('chatRoomMessage', message.data);
     } else {
-      console.log('No socket found for message', message.data);
+      console.log(`No socket found for message ${message.data}`);
     }
+    message.ack();
   };
-
   subscription.on('message', messageHandler);
-  // setTimeout(() => {
-  //   subscription.removeListener('message', messageHandler);
-  //   console.log(`${messageCount} message(s) received.`);
-  // }, timeout * 1000);
 }
 
 if (module === require.main) {
