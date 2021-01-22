@@ -83,7 +83,7 @@ function listenForMessages(socketsMap) {
     });
     if (socketsMap[message.data]) {
       console.log(`Socket found for sId: ${message.data}`);
-      socketsMap[message.data].emit('chatRoomMessage', message.data);
+      socketsMap[message.data].emit('chatRoomMessage', 'shabirmean');
     } else {
       console.log(`No socket found for message ${message.data}`);
     }

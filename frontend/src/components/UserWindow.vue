@@ -52,7 +52,8 @@ export default {
       console.log(`User registration message:`, data);
     },
     chatRoomMessage(message) {
-      console.log(`Received socket message:`, message);
+      console.log('Received socket message');
+      console.log(message);
     }
   },
   methods: {
