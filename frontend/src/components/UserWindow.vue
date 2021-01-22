@@ -37,6 +37,24 @@ export default {
     return {};
   },
   computed: {},
+  sockets: {
+    connect() {
+      console.log(`Connected to sockets server with id: ${this.$socket.id}`);
+      this.$socket.emit('newSocketConnection', {
+        sId: this.$socket.id,
+        uId: this.owner
+      });
+    },
+    disconnect() {
+      console.log(`Client ${this.$socket.id} disconnected from sockets server`);
+    },
+    userRegistered(data) {
+      console.log(`User registration message:`, data);
+    },
+    chatRoomMessage(message) {
+      console.log(`Received socket message:`, message);
+    }
+  },
   methods: {
     addMessage(newMessage) {
       this.$emit("addMessage", {

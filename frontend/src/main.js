@@ -10,7 +10,9 @@ import '@fortawesome/fontawesome-free/css/all.css'
 import '@fortawesome/fontawesome-free/js/all.js'
 
 
-export const SocketInstance = socketio('https://googlingual-delivery-dot-gcloud-dpe.ue.r.appspot.com');
+const SOCKETS_API = (process.env.SOCKET_SERVER_URL) ?
+  process.env.SOCKET_SERVER_URL : 'http://localhost:8081';
+export const SocketInstance = socketio(SOCKETS_API);
 Vue.use(new VueSocketIO({
   debug: true,
   connection: SocketInstance,

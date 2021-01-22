@@ -14,10 +14,9 @@
 
 'use strict';
 
-// [START appengine_websockets_app]
-const app = require('express')();
-app.set('view engine', 'pug');
-
+const express = require('express');
+const app = express();
+const path = require('path');
 const server = require('http').Server(app);
 const io = require('socket.io')(server, {
   cors: {
@@ -25,14 +24,41 @@ const io = require('socket.io')(server, {
   }
 });
 
+const socketsMap = {};
+const socketIdToUserMap = {};
+const userToSocketIdMap = {};
+
+app.set('view engine', 'pug');
+app.use("/assets", express.static(path.join(__dirname, 'assets')));
+
 app.get('/', (req, res) => {
   res.render('index.pug');
 });
 
 io.on('connection', socket => {
-  socket.on('messageChannel', msg => {
-    io.emit('messageChannel', msg);
+  socketsMap[socket.id] = socket;
+  socket.on('newSocketConnection', data => {
+    console.log(data);
+    const connectionId = data.sId;
+    const userId = data.uId;
+    if (!socketsMap[connectionId]) {
+      return;
+    }
+    const existingConnections = userToSocketIdMap[userId] || [];
+    userToSocketIdMap[userId] = [ ...existingConnections, connectionId];
+    socketIdToUserMap[connectionId] = userId;
+    io.emit('userRegistered', data);
   });
+});
+
+io.on('disconnect', socket => {
+  delete socketsMap[socket.id];
+  const socketUser = socketIdToUserMap[socket.id];
+  const userSockets = socketIdToUserMap[socketUser];
+  const socketIndex = userSockets.indexOf(socket.id);
+  if (socketIndex > -1) {
+    userSockets.splice(socketIndex, 1);
+  }
 });
 
 if (module === require.main) {
@@ -42,6 +68,5 @@ if (module === require.main) {
     console.log('Press Ctrl+C to quit.');
   });
 }
-// [END appengine_websockets_app]
 
 module.exports = server;
