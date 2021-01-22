@@ -67,6 +67,7 @@ const timeout = 60;
 const pubSubClient = new PubSub();
 
 function listenForMessages() {
+  console.log("Registering subscriber....");
   const subscription = pubSubClient.subscription(subscriptionName);
 
   let messageCount = 0;
@@ -86,12 +87,14 @@ function listenForMessages() {
 }
 
 if (module === require.main) {
+  console.log("Starting node app....");
+  listenForMessages();
+
   const PORT = process.env.PORT || 8081;
   server.listen(PORT, () => {
     console.log(`App listening on port ${PORT}`);
     console.log('Press Ctrl+C to quit.');
   });
-  listenForMessages();
 }
 
 module.exports = server;
