@@ -77,7 +77,12 @@ function listenForMessages() {
     console.log(`\tAttributes: ${message.attributes}`);
     messageCount += 1;
     message.ack();
-    socketsMap[message.data].emit('chatRoomMessage', message);
+    if (socketsMap[message.data]) {
+      console.log('Socket found..', message);
+      socketsMap[message.data].emit('chatRoomMessage', message);
+    } else {
+      console.log('No socket found for message', message);
+    }
   };
 
   subscription.on('message', messageHandler);
