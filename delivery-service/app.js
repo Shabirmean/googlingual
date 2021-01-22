@@ -77,7 +77,7 @@ function listenForMessages() {
     console.log(`\tAttributes: ${message.attributes}`);
     messageCount += 1;
     message.ack();
-    io.emit('chatRoomMessage', message);
+    socketsMap[message.data].emit('chatRoomMessage', message);
   };
 
   subscription.on('message', messageHandler);
