@@ -80,10 +80,10 @@ function listenForMessages() {
   };
 
   subscription.on('message', messageHandler);
-  setTimeout(() => {
-    subscription.removeListener('message', messageHandler);
-    console.log(`${messageCount} message(s) received.`);
-  }, timeout * 1000);
+  // setTimeout(() => {
+  //   subscription.removeListener('message', messageHandler);
+  //   console.log(`${messageCount} message(s) received.`);
+  // }, timeout * 1000);
 }
 
 if (module === require.main) {
