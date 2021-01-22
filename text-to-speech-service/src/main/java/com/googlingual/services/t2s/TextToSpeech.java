@@ -127,7 +127,7 @@ public class TextToSpeech implements BackgroundFunction<PubSubMessage> {
     ByteString byteStr = ByteString.copyFrom(publishMessage, StandardCharsets.UTF_8);
     PubsubMessage pubsubApiMessage = PubsubMessage.newBuilder().setData(byteStr).build();
     try {
-      Publisher publisher = getPublisher("new-translated-message");
+      Publisher publisher = getPublisher("new-fully-translated-message");
       publisher.publish(pubsubApiMessage).get();
       publisher.shutdown();
     } catch (IOException | InterruptedException | ExecutionException e) {
