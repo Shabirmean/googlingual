@@ -28,10 +28,11 @@ const io = require('socket.io')(server, {
 const socketsMap = {};          // socketId to sockets
 const socketIdToUserMap = {};   // sockerId to userId
 const userToSocketIdsMap = {};  // userId socketIdList
+const subscriptionName = 'projects/gcloud-dpe/subscriptions/socket-service-subscription';
+const pubSubClient = new PubSub();
 
 app.set('view engine', 'pug');
 app.use("/assets", express.static(path.join(__dirname, 'assets')));
-
 app.get('/', (req, res) => {
   res.render('index.pug');
 });
@@ -53,6 +54,11 @@ io.on('connection', socket => {
 });
 
 io.on('disconnect', socket => {
+  cleanUpSocketReferences(socket);
+});
+
+
+function cleanUpSocketReferences(socket) {
   delete socketsMap[socket.id];         // delete reference to socket info
   delete socketIdToUserMap[socket.id];  // delete socket to use binding
   const userId = socketIdToUserMap[socket.id];
@@ -64,33 +70,27 @@ io.on('disconnect', socket => {
   if (userToSocketIdsMap[userId].length == 0) {
     delete userToSocketIdsMap[userId];   // remove user since has 0 connections
   }
-});
-
-const subscriptionName = 'projects/gcloud-dpe/subscriptions/delivery-service-subscription';
-const timeout = 60;
-const pubSubClient = new PubSub();
+}
 
 function listenForMessages(socketsMap) {
   console.log("Registering subscriber....");
   const subscription = pubSubClient.subscription(subscriptionName);
+  subscription.on('message', handlePubSubMessage);
+}
 
-  const messageHandler = message => {
-    const payload = message.data;
-    console.log(`Received message ${message.id}:`);
-    console.log(`\tData: ${payload}`);
-    console.log(`\tAttributes: ${message.attributes}`);
-    Object.keys(socketsMap).forEach(function(key) {
-      console.log(`Found sockId: ${key}`);
-    });
-    if (socketsMap[message.data]) {
-      console.log(`Socket found for sId: ${payload}`);
-      socketsMap[message.data].emit('chatRoomMessage', payload);
-    } else {
-      console.log(`No socket found for message ${payload}`);
-    }
-    message.ack();
-  };
-  subscription.on('message', messageHandler);
+function handlePubSubMessage(message) {
+  const payload = message.data;
+  console.log(`Received message ${message.id}:\n
+    \tData: ${payload}\n
+    \tAttributes: ${message.attributes}`
+  );
+  if (socketsMap[message.data]) {
+    console.log(`Socket found for sId: ${payload}`);
+    socketsMap[message.data].emit('chatRoomMessage', payload);
+  } else {
+    console.log(`No socket found for message ${payload}`);
+  }
+  message.ack();
 }
 
 if (module === require.main) {
