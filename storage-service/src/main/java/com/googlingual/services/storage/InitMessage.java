@@ -136,7 +136,6 @@ public class InitMessage implements BackgroundFunction<PubSubMessage> {
     try {
       Publisher publisher = getPublisher(NEW_STORED_MESSAGE_TOPIC);
       publisher.publish(pubsubApiMessage).get();
-      publisher.shutdown();
     } catch (IOException | InterruptedException | ExecutionException e) {
       e.printStackTrace();
     }

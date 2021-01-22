@@ -33,10 +33,8 @@ public class Translate {
     String publishMessage = chatMessage.getJsonString();
     ByteString byteStr = ByteString.copyFrom(publishMessage, StandardCharsets.UTF_8);
     PubsubMessage pubsubApiMessage = PubsubMessage.newBuilder().setData(byteStr).build();
-
     try {
       logger.info("Publishing message: " + publishMessage);
-
       publisher.publish(pubsubApiMessage).get();
     } catch (InterruptedException | ExecutionException | NullPointerException e) {
       String errMsg = String.format("Failed to publish message from user [%s] to chatRoom [%s]",

@@ -139,7 +139,6 @@ public class TextToText implements BackgroundFunction<PubSubMessage> {
     try {
       Publisher publisher = getPublisher("new-text-to-speech-message");
       publisher.publish(pubsubApiMessage).get();
-      publisher.shutdown();
     } catch (IOException | InterruptedException | ExecutionException e) {
       e.printStackTrace();
     }
