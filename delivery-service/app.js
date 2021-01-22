@@ -94,6 +94,18 @@ function listenForMessages(socketsMap) {
 
 async function handlePubSubMessage(message) {
   const payload = message.data;
+  console.log(`Received message ${message.id}:\n
+    \tData: ${payload}\n
+    \tAttributes: ${message.attributes}`
+  );
+  if (socketsMap[message.data]) {
+    console.log(`Socket found for sId: ${payload}`);
+    socketsMap[message.data].emit('chatRoomMessage', payload);
+  } else {
+    console.log(`No socket found for message ${payload}`);
+  }
+  message.ack();
+
   const chatRoom = payload.message.chatRoomId;
   pool = pool || (await createPoolAndEnsureSchema());
   try {
@@ -111,28 +123,15 @@ async function handlePubSubMessage(message) {
   } catch (err) {
     logger.error(err);
   }
-
-  console.log(`Received message ${message.id}:\n
-    \tData: ${payload}\n
-    \tAttributes: ${message.attributes}`
-  );
-  if (socketsMap[message.data]) {
-    console.log(`Socket found for sId: ${payload}`);
-    socketsMap[message.data].emit('chatRoomMessage', payload);
-  } else {
-    console.log(`No socket found for message ${payload}`);
-  }
-  message.ack();
 }
 
 const createTcpPool = async config => {
   return await mysql.createPool({
-    user: 'root', // process.env.DB_USER, // e.g. 'my-db-user'
+    user: 'root',                 // process.env.DB_USER, // e.g. 'my-db-user'
     password: '7o0fafvczzmFl8Lg', //process.env.DB_PASS, // e.g. 'my-db-password'
-    database: 'googlingual', // process.env.DB_NAME, // e.g. 'my-database'
-    host: '10.114.49.3', // dbSocketAddr[0], // e.g. '127.0.0.1'
-    port: '3306', // e.g. '3306'
-    // ... Specify additional properties here.
+    database: 'googlingual',      // process.env.DB_NAME, // e.g. 'my-database'
+    host: '10.114.49.3',          // dbSocketAddr[0], // e.g. '127.0.0.1'
+    port: '3306',                 // e.g. '3306'
     ...config,
   });
 };
