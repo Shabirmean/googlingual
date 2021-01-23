@@ -13,5 +13,15 @@ export default {
         'Content-Type': 'application/json'
       }
     });
+  },
+  send(message) {
+    return axios.post(`${BASE_URL}/v1/send`, message, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json'
+      }
+    });
   }
 }

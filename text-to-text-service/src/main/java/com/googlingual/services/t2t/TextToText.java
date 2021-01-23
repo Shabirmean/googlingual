@@ -77,22 +77,22 @@ public class TextToText implements BackgroundFunction<PubSubMessage> {
     String messageToTranslate = messageDao.getMessage();
     String sourceLocale = messageDao.getMessageLocale();
     String destinationLocale = exchangeMessage.getDestinationLocale();
-    if (sourceLocale.equals(destinationLocale)) {
-      return;
-    }
 
     logger.info(String.format("Translation pair %s --> %s", sourceLocale, destinationLocale));
-    Translate translationService = TranslateOptions.getDefaultInstance().getService();
-    Translation translation = translationService.translate(messageToTranslate,
-        Translate.TranslateOption.sourceLanguage(sourceLocale),
-        Translate.TranslateOption.targetLanguage(destinationLocale),
-        Translate.TranslateOption.model("nmt"));
-    String translatedMessage = translation.getTranslatedText();
-    logger.log(Level.INFO,
-        String.format("Translated message [%s: %s] to [%s: %s]",
-            sourceLocale, messageToTranslate, destinationLocale, translatedMessage));
-    Connection connection = null;
+    String translatedMessage = messageToTranslate;
+    if (!sourceLocale.equals(destinationLocale)) {
+      Translate translationService = TranslateOptions.getDefaultInstance().getService();
+      Translation translation = translationService.translate(messageToTranslate,
+          Translate.TranslateOption.sourceLanguage(sourceLocale),
+          Translate.TranslateOption.targetLanguage(destinationLocale),
+          Translate.TranslateOption.model("nmt"));
+      translatedMessage = translation.getTranslatedText();
+      logger.log(Level.INFO,
+          String.format("Translated message [%s: %s] to [%s: %s]",
+              sourceLocale, messageToTranslate, destinationLocale, translatedMessage));
+    }
 
+    Connection connection = null;
     try {
       connection = getConnection(DEFAULT_SQL_POOL_SIZE);
       connection.setAutoCommit(false);

@@ -8,17 +8,17 @@
         v-if="isAuthor"
         class="image-chart image-left"
         :src="require(`@/assets/${avatar}`)"
-        :alt="name"
+        :alt="author"
       />
       {{ displayMessage }}
       <img
         v-if="!isAuthor"
         class="image-chart image-right"
         :src="require(`@/assets/${avatar}`)"
-        :alt="name"
+        :alt="author"
       />
     </p>
-    <audio v-if="!isAuthor || isAudio" controls :class="{ 'audio-out': !isAuthor }">
+    <audio v-if="isAudio" controls :class="{ 'audio-out': !isAuthor }">
       <source :src="message.audioMessage"/>
       Your browser does not support the audio element.
     </audio>
@@ -41,26 +41,22 @@ export default {
       type: String,
       default: "avataaar-default.png",
     },
-    name: {
+    author: {
       type: String,
       default: "Person",
     },
   },
-  data: () => {
-    return {};
-  },
   computed: {
     displayMessage() {
-      return this.isAuthor ? this.message.original : this.message.body;
+      return this.isAuthor ? this.message.textOriginal : this.message.textMessage;
     },
     isAuthor() {
       return this.sent;
     },
     isAudio() {
-      return this.message.original === 'Audio recording...';
+      return this.message.audioMessage || this.message.textOriginal === 'Audio recording...';
     },
   },
-  methods: {},
 };
 </script>
 

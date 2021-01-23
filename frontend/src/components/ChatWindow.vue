@@ -7,18 +7,14 @@
         >
           <MessageBlock
             :message="message"
-            :sent="message.author === owner"
-            :avatar="message.avatar"
-            :name="message.author">
+            :sent="message.author.id === userId"
+            :avatar="message.author.avatar"
+            :author="message.author.username">
           </MessageBlock>
         </div>
       </section>
-
-
   </div>
-
 </template>
-
 
 <script>
 import MessageBlock from './MessageBlock.vue'
@@ -33,16 +29,11 @@ export default {
       type: Array,
       required: true,
     },
-    owner: {
+    userId: {
       type: String,
       required: true,
     },
   },
-  data: () => {
-    return {};
-  },
-  computed: {},
-  methods: {},
 };
 </script>
 

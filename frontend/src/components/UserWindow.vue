@@ -1,13 +1,17 @@
 <template>
   <div :class="windowTheme">
-    <ChatWindow :chatMessages="chatMessages" :owner="owner"></ChatWindow>
+    <ChatWindow :chatMessages="chatMessages" :userId="user.id"></ChatWindow>
     <InputArea @addMessage="addMessage" @addAudioMessage="addAudioMessage"></InputArea>
   </div>
 </template>
 
 <script>
+import socketio from 'socket.io-client';
 import ChatWindow from "./ChatWindow.vue";
 import InputArea from "./InputArea.vue";
+
+const SOCKETS_API = (process.env.SOCKET_SERVER_URL) ?
+  process.env.SOCKET_SERVER_URL : 'http://localhost:8081';
 
 export default {
   name: "UserWindow",
@@ -20,12 +24,16 @@ export default {
       type: String,
       required: true,
     },
+    roomId: {
+      type: String,
+      required: true,
+    },
     chatMessages: {
       type: Array,
       required: true,
     },
-    owner: {
-      type: String,
+    user: {
+      type: Object,
       required: true,
     },
     avatar: {
@@ -34,45 +42,51 @@ export default {
     },
   },
   data: () => {
-    return {};
+    return {
+      socket: socketio(SOCKETS_API),
+    };
   },
-  computed: {},
-  sockets: {
+  created() {
+    this.socket.on('connect', this.connect);
+    this.socket.on('disconnect', this.disconnect);
+    this.socket.on('userRegistered', this.userRegistered);
+    this.socket.on('chatRoomMessage', this.chatRoomMessage);
+  },
+  methods: {
     connect() {
-      console.log(`Connected to sockets server with id: ${this.$socket.id}`);
-      this.$socket.emit('newSocketConnection', {
-        sId: this.$socket.id,
-        uId: this.owner
+      console.log(`Connected to sockets server with id: ${this.socket.id}`);
+      this.socket.emit('newSocketConnection', {
+        sId: this.socket.id,
+        uId: this.user.id,
+        textLocale: this.user.textLocale,
+        audioLocale:this.user.audioLocale,
       });
     },
     disconnect() {
-      console.log(`Client ${this.$socket.id} disconnected from sockets server`);
+      console.log(`Client ${this.socket.id} disconnected from sockets server`);
     },
     userRegistered(data) {
       console.log(`User registration message:`, data);
     },
-    chatRoomMessage(message) {
-      console.log(message);
-      const decoded = new TextDecoder("utf-8");
-      const payload = decoded.decode(message);
-      console.log(`Received socket message:`);
+    chatRoomMessage(payload) {
       console.log(payload);
-      // console.log(String.fromCharCode.apply(null, new Uint8Array(message)));
-    }
-  },
-  methods: {
+      this.$emit('appendMessage', {
+        recipient: this.user,
+        ...payload,
+      });
+    },
     addMessage(newMessage) {
-      this.$emit("addMessage", {
-        body: newMessage,
-        author: this.owner,
-        avatar: this.avatar,
+      this.$emit("sendMessage", {
+        textMessage: newMessage,
+        author: this.user,
+        roomId: this.roomId,
       });
     },
     addAudioMessage(audioMessage) {
-      this.$emit("addAudioMessage", {
-        body: 'Audio recording...',
-        author: this.owner,
-        avatar: this.avatar,
+      this.$emit("sendAudioMessage", {
+        audioMessage: 'Audio recording...',
+        author: this.user,
+        roomId: this.roomId,
       }, audioMessage);
     },
   },

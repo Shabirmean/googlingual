@@ -26,9 +26,10 @@ const io = require('socket.io')(server, {
   }
 });
 
-const socketsMap = {};          // socketId to sockets
-const socketIdToUserMap = {};   // sockerId to userId
-const userToSocketIdsMap = {};  // userId socketIdList
+let socketsMap = {};          // socketId to sockets
+let socketIdToUserMap = {};   // sockerId to userId
+let userToSocketIdsMap = {};  // userId socketIdList
+let userInfoMap = {};         // holds user preferences
 const subscriptionName = 'projects/gcloud-dpe/subscriptions/socket-service-subscription';
 const pubSubClient = new PubSub();
 
@@ -50,66 +51,58 @@ io.on('connection', socket => {
     const existingConnections = userToSocketIdsMap[userId] || [];
     userToSocketIdsMap[userId] = [ ...existingConnections, socketId];
     socketIdToUserMap[socketId] = userId;
+    userInfoMap[userId] = {
+      textLocale: data.textLocale,
+      audioLocale: data.audioLocale,
+    }
     io.emit('userRegistered', data);
+  });
+
+  socket.on('disconnect', () => {
+    console.log(`Socket ${socket.id} disconnected...`);
+    cleanUpSocketReferences(socket);
   });
 });
 
-io.on('disconnect', socket => {
-  cleanUpSocketReferences(socket);
-});
-
 function cleanUpSocketReferences(socket) {
-  delete socketsMap[socket.id];         // delete reference to socket info
-  delete socketIdToUserMap[socket.id];  // delete socket to use binding
   const userId = socketIdToUserMap[socket.id];
-  const socketList = userToSocketIdsMap[userId];
+  const socketList = userToSocketIdsMap[userId] || [];
   const socketIndex = socketList.indexOf(socket.id);
   if (socketIndex > -1) {
-    socketList.splice(socketIndex, 1);  // remove socket for user's list
+    socketList.splice(socketIndex, 1);                          // remove socket for user's list
   }
   if (userToSocketIdsMap[userId].length == 0) {
-    delete userToSocketIdsMap[userId];   // remove user since has 0 connections
+    const { [userId]: sockList, ...rest0 } = userToSocketIdsMap;
+    const { [userId]: prefs, ...rest1 } = userInfoMap;
+    userToSocketIdsMap = rest0;
+    userInfoMap = rest1;                                 // remove user since has 0 connections
   }
+  const { [socket.id]: currId1, ...rest2 } = socketsMap;        // delete reference to socket info
+  const { [socket.id]: currId2, ...rest3 } = socketIdToUserMap; // delete socket to use binding
+  socketsMap = rest2;
+  socketIdToUserMap = rest3;
 }
 
 const createPool = async () => {
-  const config = {
+  return await mysql.createPool({
+    user: 'root',                                   // process.env.DB_USER, // e.g. 'my-db-user'
+    password: '7o0fafvczzmFl8Lg',                   //process.env.DB_PASS, // e.g. 'my-db-password'
+    database: 'googlingual',                        // process.env.DB_NAME, // e.g. 'my-database'
+    host: '34.71.243.72',                           // dbSocketAddr[0], // e.g. '127.0.0.1'
+    port: '3306',                                   // e.g. '3306'
     connectionLimit: 5,
-    connectTimeout: 10000, // 10 seconds
-    acquireTimeout: 10000, // 10 seconds
-    waitForConnections: true, // Default: true
-    queueLimit: 0, // Default: 0
-  };
-  return await createTcpPool(config);
+    connectTimeout: 10000,                          // 10 seconds
+    acquireTimeout: 10000,                          // 10 seconds
+    waitForConnections: true,                       // Default: true
+    queueLimit: 0,                                  // Default: 0
+  });
 };
 
 const createPoolAndEnsureSchema = async () => await createPool();
-let pool;
+let dbPool;
 
-function listenForMessages(socketsMap) {
-  console.log("Registering subscriber....");
-  const subscription = pubSubClient.subscription(subscriptionName);
-  subscription.on('message', handlePubSubMessage);
-}
-
-async function handlePubSubMessage(message) {
-  const payload = JSON.parse(message.data);
-  console.log(`Received message ${message.id}:\n
-    \tData: ${payload}\n
-    \tAttributes: ${message.attributes}`
-  );
-  if (socketsMap[message.data]) {
-    console.log(`Socket found for sId: ${payload.message.id}`);
-    socketsMap[message.data].emit('chatRoomMessage', payload);
-  } else {
-    console.log(`No socket found for message ${payload.message.id}`);
-  }
-  message.ack();
-
-
-
-  const chatRoom = payload.message.chatRoomId;
-  pool = pool || (await createPoolAndEnsureSchema());
+async function fetchConnectedUsers(chatRoom) {
+  dbPool = dbPool || (await createPoolAndEnsureSchema());
   try {
     const stmt = `SELECT
        BIN_TO_UUID(user_id) user_id,
@@ -117,28 +110,43 @@ async function handlePubSubMessage(message) {
        audio_locale
       FROM roomusers
       WHERE chatroom_id = UUID_TO_BIN(?);`;
-    const roomUsersQuery = pool.query(stmt, [chatRoom]);
-    const roomUsers = await roomUsersQuery;
-    console.log('Response from mysql');
-    roomUsers.array.forEach(res => {
-      console.log(`User: ${res.user_id}`);
-    });
+    const roomUsersQuery = dbPool.query(stmt, [chatRoom]);
+    return await roomUsersQuery;
   } catch (err) {
-    logger.error(err);
+    console.log(err);
+    return [];
   }
 }
 
-const createTcpPool = async config => {
-  return await mysql.createPool({
-    user: 'root',                 // process.env.DB_USER, // e.g. 'my-db-user'
-    password: '7o0fafvczzmFl8Lg', //process.env.DB_PASS, // e.g. 'my-db-password'
-    database: 'googlingual',      // process.env.DB_NAME, // e.g. 'my-database'
-    host: '10.114.49.3',          // dbSocketAddr[0], // e.g. '127.0.0.1'
-    port: '3306',                 // e.g. '3306'
-    ...config,
-  });
-};
+async function handlePubSubMessage(message) {
+  const payload = JSON.parse(message.data);
+  console.log(`Received message ${message.id} with attributes: `, message.attributes);
+  console.log(payload);
 
+  const chatMessage = payload.message;
+  const chatRoom = chatMessage.chatRoomId;
+  const roomUsers = await fetchConnectedUsers(chatRoom);
+  roomUsers.forEach(user => {
+    const uId = user.user_id;
+    const socketIdList = userToSocketIdsMap[uId];
+    if (!socketIdList || !userInfoMap[uId] || userInfoMap[uId].textLocale != chatMessage.messageLocale) {
+      return;
+    }
+    socketIdList.forEach(sockId => {
+      if (socketsMap[sockId]) {
+        console.log(`Socket found for userId: ${uId} --> ${sockId}`);
+        socketsMap[sockId].emit('chatRoomMessage', chatMessage);
+      }
+    });
+  });
+  message.ack();
+}
+
+function listenForMessages(socketsMap) {
+  console.log("Registering subscriber....");
+  const subscription = pubSubClient.subscription(subscriptionName);
+  subscription.on('message', handlePubSubMessage);
+}
 
 if (module === require.main) {
   console.log("Starting node app....");

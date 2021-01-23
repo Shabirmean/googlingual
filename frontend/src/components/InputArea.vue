@@ -3,7 +3,7 @@
     <form>
       <div class="form-group">
         <label for="chatMessage">Your message</label>
-        <textarea
+        <textarea v-on:keyup.enter="addMessage"
           class="form-control rounded-0"
           id="chatMessage"
           rows="2"
