@@ -88,7 +88,7 @@ const createPool = async () => {
     user: 'root',                                   // process.env.DB_USER, // e.g. 'my-db-user'
     password: '7o0fafvczzmFl8Lg',                   //process.env.DB_PASS, // e.g. 'my-db-password'
     database: 'googlingual',                        // process.env.DB_NAME, // e.g. 'my-database'
-    host: '34.71.243.72',                           // dbSocketAddr[0], // e.g. '127.0.0.1'
+    host: '10.114.49.3',                            // dbSocketAddr[0], // e.g. '34.71.243.72'
     port: '3306',                                   // e.g. '3306'
     connectionLimit: 5,
     connectTimeout: 10000,                          // 10 seconds
