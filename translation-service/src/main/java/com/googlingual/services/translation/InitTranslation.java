@@ -83,12 +83,12 @@ public class InitTranslation implements BackgroundFunction<PubSubMessage> {
       connection.setAutoCommit(false);
       PreparedStatement getMessageLocaleStmt = connection.prepareStatement(GET_LOCALES_QUERY);
       getMessageLocaleStmt.setString(1, messageDao.getChatRoomId().toString());
-      ResultSet rs = getMessageLocaleStmt.executeQuery();
+      ResultSet resultsSet = getMessageLocaleStmt.executeQuery();
       Map<String, Set<String>> textToSpeechLocales = new HashMap<>();
 
-      while (rs.next()) {
-        String msgLocale = rs.getString("message_locale");
-        String audLocale = rs.getString("audio_locale");
+      while (resultsSet.next()) {
+        String msgLocale = resultsSet.getString("message_locale");
+        String audLocale = resultsSet.getString("audio_locale");
         textToSpeechLocales.computeIfAbsent(msgLocale, ml -> new HashSet<>());
         String[] audLocaleParts = audLocale.split("-");
         if (audLocaleParts.length > 0) {
@@ -97,7 +97,7 @@ public class InitTranslation implements BackgroundFunction<PubSubMessage> {
         }
       }
       connection.commit();
-      rs.close();
+      resultsSet.close();
       getMessageLocaleStmt.close();
 
       for (String locale: textToSpeechLocales.keySet()) {
