@@ -89,7 +89,7 @@ public class InitTranslation implements BackgroundFunction<PubSubMessage> {
       while (rs.next()) {
         String msgLocale = rs.getString("message_locale");
         String audLocale = rs.getString("audio_locale");
-        textToSpeechLocales.put(msgLocale, new HashSet<>());
+        textToSpeechLocales.computeIfAbsent(msgLocale, ml -> new HashSet<>());
         String[] audLocaleParts = audLocale.split("-");
         if (audLocaleParts.length > 0) {
           Set<String> audSet = textToSpeechLocales.computeIfAbsent(audLocaleParts[0], (k) -> new HashSet<>());
