@@ -10,8 +10,9 @@ import socketio from 'socket.io-client';
 import ChatWindow from "./ChatWindow.vue";
 import InputArea from "./InputArea.vue";
 
-const SOCKETS_API = (process.env.SOCKET_SERVER_URL) ?
-  process.env.SOCKET_SERVER_URL : 'http://localhost:8081';
+// const SOCKETS_API = (process.env.SOCKET_SERVER_URL) ?
+//   process.env.SOCKET_SERVER_URL : 'http://localhost:8081';
+const SOCKETS_API = 'https://googlingual-delivery-dot-gcloud-dpe.ue.r.appspot.com';
 
 export default {
   name: "UserWindow",
