@@ -134,9 +134,9 @@ async function handlePubSubMessage(message) {
     if (!socketIdList || !userInfoMap[uId]) {
       return;
     }
-    boolean isAudioButLocaleMismatch = chatMessage.audioMessage && userInfoMap[uId].audioLocale != chatMessage.audioLocale;
-    boolean isAudioButAudioDisabled = chatMessage.audioMessage && !userInfoMap[uId].audioEnabled
-    boolean isNotAudioButTextLocaleMismatch = !chatMessage.audioMessage && userInfoMap[uId].textLocale != chatMessage.messageLocale;
+    const isAudioButLocaleMismatch = chatMessage.audioMessage && userInfoMap[uId].audioLocale != chatMessage.audioLocale;
+    const isAudioButAudioDisabled = chatMessage.audioMessage && !userInfoMap[uId].audioEnabled
+    const isNotAudioButTextLocaleMismatch = !chatMessage.audioMessage && userInfoMap[uId].textLocale != chatMessage.messageLocale;
     if (isAudioButLocaleMismatch || isAudioButAudioDisabled || isNotAudioButTextLocaleMismatch) {
       return;
     }
