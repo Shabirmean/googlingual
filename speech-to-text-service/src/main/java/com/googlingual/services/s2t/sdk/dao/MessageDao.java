@@ -1,8 +1,8 @@
-package com.googlingual.services.t2s.sdk.dao;
+package com.googlingual.services.s2t.sdk.dao;
 
 import com.google.gson.Gson;
-import com.googlingual.services.t2s.sdk.message.ChatMessage;
-import com.googlingual.services.t2s.sdk.pubsub.PubSubExchangeMessage;
+import com.googlingual.services.s2t.sdk.message.ChatMessage;
+import com.googlingual.services.s2t.sdk.pubsub.PubSubExchangeMessage;
 import java.util.UUID;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 

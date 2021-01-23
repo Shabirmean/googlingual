@@ -1,7 +1,7 @@
-package com.googlingual.services.t2s.sdk.pubsub;
+package com.googlingual.services.s2t.sdk.pubsub;
 
 import com.google.gson.Gson;
-import com.googlingual.services.t2s.sdk.dao.MessageDao;
+import com.googlingual.services.s2t.sdk.dao.MessageDao;
 import java.util.HashSet;
 import java.util.Set;
 import org.apache.commons.lang3.builder.ToStringBuilder;

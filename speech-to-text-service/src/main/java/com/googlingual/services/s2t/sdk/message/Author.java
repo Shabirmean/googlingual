@@ -1,4 +1,4 @@
-package com.googlingual.services.t2s.sdk.message;
+package com.googlingual.services.s2t.sdk.message;
 
 import java.util.UUID;
 

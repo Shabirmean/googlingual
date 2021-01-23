@@ -1,6 +1,4 @@
-package com.googlingual.services.t2s;
-
-import static com.googlingual.services.t2s.util.SqlConstants.UPDATE_MESSAGE_QUERY;
+package com.googlingual.services.s2t;
 
 import com.google.cloud.functions.BackgroundFunction;
 import com.google.cloud.functions.Context;
@@ -15,8 +13,9 @@ import com.google.cloud.speech.v1.SpeechRecognitionResult;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
-import com.googlingual.services.t2s.SpeechToText.PubSubMessage;
-import com.googlingual.services.t2s.sdk.dao.MessageDao;
+import com.googlingual.services.s2t.util.SqlConstants;
+import com.googlingual.services.s2t.SpeechToText.PubSubMessage;
+import com.googlingual.services.s2t.sdk.dao.MessageDao;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import java.io.IOException;
@@ -102,7 +101,8 @@ public class SpeechToText implements BackgroundFunction<PubSubMessage> {
 
       connection = getConnection(DEFAULT_SQL_POOL_SIZE);
       connection.setAutoCommit(false);
-      PreparedStatement updateMessageQuery = connection.prepareStatement(UPDATE_MESSAGE_QUERY);
+      PreparedStatement updateMessageQuery = connection.prepareStatement(
+          SqlConstants.UPDATE_MESSAGE_QUERY);
       updateMessageQuery.setString(1, transcribedText);
       updateMessageQuery.setString(2, textLocale);
       updateMessageQuery.setString(3, messageId.toString());

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.googlingual.services.t2s.sdk.message;
+package com.googlingual.services.s2t.sdk.message;
 
 import com.google.gson.Gson;
 import java.util.UUID;

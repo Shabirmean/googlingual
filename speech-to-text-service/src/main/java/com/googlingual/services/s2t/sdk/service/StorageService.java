@@ -1,6 +1,6 @@
-package com.googlingual.services.t2s.sdk.service;
+package com.googlingual.services.s2t.sdk.service;
 
-import com.googlingual.services.t2s.sdk.dao.MessageDao;
+import com.googlingual.services.s2t.sdk.dao.MessageDao;
 import java.util.UUID;
 
 public interface StorageService {

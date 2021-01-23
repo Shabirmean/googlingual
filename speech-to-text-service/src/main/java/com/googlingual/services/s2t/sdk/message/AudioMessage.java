@@ -1,18 +1,18 @@
-package com.googlingual.services.t2s.sdk.message;
+package com.googlingual.services.s2t.sdk.message;
 
-public class TextMessage {
-  private static final String DEFAULT_LOCALE = "en";
+public class AudioMessage {
+  private static final String DEFAULT_LOCALE = "en-US";
   private String message;
   private String locale;
 
-  public TextMessage() {
+  public AudioMessage() {
   }
 
-  public TextMessage(String message) {
+  public AudioMessage(String message) {
     this(message, DEFAULT_LOCALE);
   }
 
-  public TextMessage(String message, String locale) {
+  public AudioMessage(String message, String locale) {
     this.message = message;
     this.locale = locale;
   }
