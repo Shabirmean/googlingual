@@ -77,20 +77,23 @@ public class TextToText implements BackgroundFunction<PubSubMessage> {
     String messageToTranslate = messageDao.getMessage();
     String sourceLocale = messageDao.getMessageLocale();
     String destinationLocale = exchangeMessage.getDestinationLocale();
-
-    logger.info(String.format("Translation pair %s --> %s", sourceLocale, destinationLocale));
-    String translatedMessage = messageToTranslate;
-    if (!sourceLocale.equals(destinationLocale)) {
-      Translate translationService = TranslateOptions.getDefaultInstance().getService();
-      Translation translation = translationService.translate(messageToTranslate,
-          Translate.TranslateOption.sourceLanguage(sourceLocale),
-          Translate.TranslateOption.targetLanguage(destinationLocale),
-          Translate.TranslateOption.model("nmt"));
-      translatedMessage = translation.getTranslatedText();
-      logger.log(Level.INFO,
-          String.format("Translated message [%s: %s] to [%s: %s]",
-              sourceLocale, messageToTranslate, destinationLocale, translatedMessage));
+    if (sourceLocale.equals(destinationLocale)) {
+      for (String audioLocale: exchangeMessage.getAudioDestinationLocales()) {
+        forwardToTextToSpeechService(messageDao, audioLocale);
+        logger.info(String.format("Published T2S translation request for audio lang [%s]", audioLocale));
+      }
+      return;
     }
+    logger.info(String.format("Translation pair %s --> %s", sourceLocale, destinationLocale));
+    Translate translationService = TranslateOptions.getDefaultInstance().getService();
+    Translation translation = translationService.translate(messageToTranslate,
+        Translate.TranslateOption.sourceLanguage(sourceLocale),
+        Translate.TranslateOption.targetLanguage(destinationLocale),
+        Translate.TranslateOption.model("nmt"));
+    String translatedMessage = translation.getTranslatedText();
+    logger.log(Level.INFO,
+        String.format("Translated message [%s: %s] to [%s: %s]",
+            sourceLocale, messageToTranslate, destinationLocale, translatedMessage));
 
     Connection connection = null;
     try {
@@ -112,10 +115,8 @@ public class TextToText implements BackgroundFunction<PubSubMessage> {
       connection.commit();
       insertMessageStmt.close();
       logger.info(String.format("Inserted translated text message [id: %s]", updatedDao.getId()));
-
       for (String audioLocale: exchangeMessage.getAudioDestinationLocales()) {
-        PubSubExchangeMessage newExchangeMessage = new PubSubExchangeMessage(updatedDao, audioLocale);
-        forwardToTextToSpeechService(newExchangeMessage);
+        forwardToTextToSpeechService(updatedDao, audioLocale);
         logger.info(String.format("Published T2S translation request for audio lang [%s]", audioLocale));
       }
     } catch (Exception ex) {
@@ -132,7 +133,8 @@ public class TextToText implements BackgroundFunction<PubSubMessage> {
     }
   }
 
-  private void forwardToTextToSpeechService(PubSubExchangeMessage exchangeMessage) {
+  private void forwardToTextToSpeechService(MessageDao messageDao,  String audioLocale) {
+    PubSubExchangeMessage exchangeMessage = new PubSubExchangeMessage(messageDao, audioLocale);
     String publishMessage = exchangeMessage.getJsonString();
     ByteString byteStr = ByteString.copyFrom(publishMessage, StandardCharsets.UTF_8);
     PubsubMessage pubsubApiMessage = PubsubMessage.newBuilder().setData(byteStr).build();
