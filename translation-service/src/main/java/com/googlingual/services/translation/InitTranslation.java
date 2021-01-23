@@ -101,9 +101,12 @@ public class InitTranslation implements BackgroundFunction<PubSubMessage> {
       getMessageLocaleStmt.close();
 
       for (String locale: textToSpeechLocales.keySet()) {
-        PubSubExchangeMessage exchangeMessage = new PubSubExchangeMessage(messageDao, locale, textToSpeechLocales.get(locale));
+        Set<String> audLocals = textToSpeechLocales.get(locale);
+        PubSubExchangeMessage exchangeMessage = new PubSubExchangeMessage(messageDao, locale, audLocals);
         forwardToTextToTextService(exchangeMessage);
-        logger.info(String.format("Published T2T translation request for lang [%s]", locale));
+        StringBuilder audLocaleCollector = new StringBuilder();
+        audLocals.forEach(audLocaleCollector::append);
+        logger.info(String.format("Published T2T translation request for lang [%s] with audio-set [%s]", locale, audLocaleCollector));
       }
     } catch (Exception ex) {
       ex.printStackTrace();
