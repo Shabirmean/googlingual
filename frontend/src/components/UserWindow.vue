@@ -71,6 +71,9 @@ export default {
     },
     chatRoomMessage(payload) {
       console.log(payload);
+      if (payload.sender === this.user.id) {
+        return;
+      }
       this.$emit('appendMessage', {
         recipient: this.user,
         ...payload,

@@ -76,7 +76,7 @@ export default {
       kairunnisa: {
         id: '547996d3-56dd-11eb-8833-42010a723002',
         username: 'kairunnisa',
-        textLocale: 'en',
+        textLocale: 'ta',
         audioLocale: 'ta-IN',
         avatar: 'avatar-female.png',
         isAudioEnabled: true,
