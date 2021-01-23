@@ -115,6 +115,7 @@ public class SpeechToText implements BackgroundFunction<PubSubMessage> {
       logger.info(String.format(
           "Setting audio message [false] for transcribed message [%s] and re-publishing", messageId));
       exchangeMessage.setAudio(false);
+      exchangeMessage.setMessage(transcribedText);
       exchangeMessage.setMessageLocale(textLocale);
       publishTranscribedMessage(exchangeMessage);
     } catch (IOException | SQLException ex) {
