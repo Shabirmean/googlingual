@@ -88,7 +88,7 @@ export default {
     },
     addAudioMessage(audioMessage) {
       this.$emit("sendAudioMessage", {
-        audioMessage: 'Audio recording...',
+        textMessage: 'Audio recording...',
         author: this.user,
         roomId: this.roomId,
       }, audioMessage);

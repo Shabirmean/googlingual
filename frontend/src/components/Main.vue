@@ -95,6 +95,21 @@ export default {
       return Object.values(this.perUserMessages.kairunnisa).sort((a, b) => a.id < b.id);
     },
   },
+  // async created() {
+  //   setTimeout(() => {
+  //     GooglingualApi.send({
+  //       roomId: 'cb3bf539-56dd-11eb-8833-42010a723002',
+  //       author: {
+  //         id: 'bd63bae8-5744-11eb-8833-42010a723002',
+  //         username: 'afifa',
+  //       },
+  //       text: {
+  //         message: 'Ping',
+  //         locale: 'en',
+  //       },
+  //     });
+  //   }, 1500);
+  // },
   methods: {
     getUser(uId) {
       const users = [this.shabirmean, this.kairunnisa];
@@ -148,45 +163,54 @@ export default {
       if (!audioMessage || !audioMessage.url) {
         return;
       }
-      const pushedMessage = {
-        id: this.id,
-        ...msg,
-        original: msg.body,
-        audioMessage: audioMessage.url,
+
+      const messages = this.perUserMessages[msg.author.username];
+      let maxIndex = Object.keys(messages).sort().reverse()[0];
+      maxIndex = maxIndex ? Number(maxIndex) + 1 : 0;
+      this.perUserMessages[msg.author.username] = {
+        ...messages,
+        [maxIndex.toString()]: {
+          id: maxIndex,
+          ...msg,
+          textLocale: msg.author.textLocale,
+          textOriginal: msg.textMessage,
+          audioMessage: audioMessage.url,
+        },
       };
-      this.messages = {
-        ...this.messages,
-        [this.id.toString()]: pushedMessage
+
+      const apiMessage = {
+        roomId: msg.roomId,
+        author: {
+          id: msg.author.id,
+          username: msg.author.username,
+        },
+        audio: {
+          message: null,
+          locale: msg.author.audioLocale,
+        },
       }
-      this.id += 1;
 
       const reader = new FileReader();
       reader.onloadend = async () => {
-        await this.updateTranscribedMessage(reader, pushedMessage);
+        await this.updateTranscribedMessage(reader, apiMessage);
       };
       await reader.readAsDataURL(audioMessage.blob);
     },
-    async updateTranscribedMessage(reader, pushedMessage) {
+    async updateTranscribedMessage(reader, apiMessage) {
       const base64data = reader.result;
       const encodedAudio = base64data.substr(base64data.indexOf(",") + 1);
-      const toSentJson = {
-        audioMessage: {
+      const toSendJson = {
+        ...apiMessage,
+        text: {
+          message: null,
+          locale: null,
+        },
+        audio: {
+          ...apiMessage.audio,
           message: encodedAudio,
-          locale: "en-US",
         },
       };
-      const response = await GooglingualApi.translate(toSentJson);
-      if (response.status !== 200 || !response.data) {
-        alert("Failed to translate audio message");
-        return;
-      }
-      this.messages = {
-        ...this.messages,
-        [pushedMessage.id]: {
-          ...this.messages[pushedMessage.id],
-          body: response.data.translated,
-        }
-      };
+      GooglingualApi.send(toSendJson);
     },
   },
 };
