@@ -61,6 +61,7 @@ export default {
         uId: this.user.id,
         textLocale: this.user.textLocale,
         audioLocale:this.user.audioLocale,
+        audioEnabled: true,
       });
     },
     disconnect() {

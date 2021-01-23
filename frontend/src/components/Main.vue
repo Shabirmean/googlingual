@@ -95,21 +95,21 @@ export default {
       return Object.values(this.perUserMessages.kairunnisa).sort((a, b) => a.id < b.id);
     },
   },
-  // async created() {
-  //   setTimeout(() => {
-  //     GooglingualApi.send({
-  //       roomId: 'cb3bf539-56dd-11eb-8833-42010a723002',
-  //       author: {
-  //         id: 'bd63bae8-5744-11eb-8833-42010a723002',
-  //         username: 'afifa',
-  //       },
-  //       text: {
-  //         message: 'Ping',
-  //         locale: 'en',
-  //       },
-  //     });
-  //   }, 1500);
-  // },
+  async created() {
+    setTimeout(() => {
+      GooglingualApi.send({
+        roomId: 'cb3bf539-56dd-11eb-8833-42010a723002',
+        author: {
+          id: 'bd63bae8-5744-11eb-8833-42010a723002',
+          username: 'afifa',
+        },
+        text: {
+          message: 'Ping',
+          locale: 'en',
+        },
+      });
+    }, 1500);
+  },
   methods: {
     getUser(uId) {
       const users = [this.shabirmean, this.kairunnisa];

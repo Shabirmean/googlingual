@@ -30,8 +30,10 @@ let socketsMap = {};          // socketId to sockets
 let socketIdToUserMap = {};   // sockerId to userId
 let userToSocketIdsMap = {};  // userId socketIdList
 let userInfoMap = {};         // holds user preferences
-const subscriptionName = 'projects/gcloud-dpe/subscriptions/socket-service-subscription';
-const pubSubClient = new PubSub();
+const textMessageSubscription = 'projects/gcloud-dpe/subscriptions/socket-service-subscription';
+const audioMessageSubscription = 'projects/gcloud-dpe/subscriptions/socket-service-subscription-for-audio';
+const pubSubClientForText = new PubSub();
+const pubSubClientForAudio = new PubSub();
 
 app.set('view engine', 'pug');
 app.use("/assets", express.static(path.join(__dirname, 'assets')));
@@ -129,7 +131,13 @@ async function handlePubSubMessage(message) {
   roomUsers.forEach(user => {
     const uId = user.user_id;
     const socketIdList = userToSocketIdsMap[uId];
-    if (!socketIdList || !userInfoMap[uId] || userInfoMap[uId].textLocale != chatMessage.messageLocale) {
+    if (!socketIdList || !userInfoMap[uId]) {
+      return;
+    }
+    boolean isAudioButLocaleMismatch = chatMessage.audioMessage && userInfoMap[uId].audioLocale != chatMessage.audioLocale;
+    boolean isAudioButAudioDisabled = chatMessage.audioMessage && !userInfoMap[uId].audioEnabled
+    boolean isNotAudioButTextLocaleMismatch = !chatMessage.audioMessage && userInfoMap[uId].textLocale != chatMessage.messageLocale;
+    if (isAudioButLocaleMismatch || isAudioButAudioDisabled || isNotAudioButTextLocaleMismatch) {
       return;
     }
     socketIdList.forEach(sockId => {
@@ -144,8 +152,10 @@ async function handlePubSubMessage(message) {
 
 function listenForMessages(socketsMap) {
   console.log("Registering subscriber....");
-  const subscription = pubSubClient.subscription(subscriptionName);
-  subscription.on('message', handlePubSubMessage);
+  const textSubscription = pubSubClientForText.subscription(textMessageSubscription);
+  const audioSubscription = pubSubClientForAudio.subscription(audioMessageSubscription);
+  textSubscription.on('message', handlePubSubMessage);
+  audioSubscription.on('message', handlePubSubMessage);
 }
 
 if (module === require.main) {
