@@ -10,8 +10,8 @@ import socketio from 'socket.io-client';
 import ChatWindow from "./ChatWindow.vue";
 import InputArea from "./InputArea.vue";
 
-const SOCKETS_API = (process.env.SOCKET_SERVER_URL) ?
-  process.env.SOCKET_SERVER_URL : 'http://localhost:8081';
+const SOCKETS_API = (process.env.VUE_APP_SOCKET_SERVER_URL) ?
+  process.env.VUE_APP_SOCKET_SERVER_URL : 'http://localhost:8081';
 
 export default {
   name: "UserWindow",
