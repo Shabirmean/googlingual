@@ -95,21 +95,6 @@ export default {
       return Object.values(this.perUserMessages.kairunnisa).sort((a, b) => a.id < b.id);
     },
   },
-  async created() {
-    setTimeout(() => {
-      GooglingualApi.send({
-        roomId: 'cb3bf539-56dd-11eb-8833-42010a723002',
-        author: {
-          id: 'bd63bae8-5744-11eb-8833-42010a723002',
-          username: 'afifa',
-        },
-        text: {
-          message: 'Ping',
-          locale: 'en',
-        },
-      });
-    }, 1500);
-  },
   methods: {
     getUser(uId) {
       const users = [this.shabirmean, this.kairunnisa];
@@ -151,12 +136,16 @@ export default {
       if (!msgAuthor) {
         return;
       }
+      let audio = null;
+      if (msg.audioMessage) {
+        audio = new Audio(`data:audio/wav;base64,${msg.audioMessage}`);
+      }
       messages[msg.messageIndex.toString()] = {
         author: msgAuthor,
         id: msg.messageIndex,
         textMessage: msg.message,
         textLocale: msg.messageLocale,
-        audioMessage: msg.audioMessage,
+        audioMessage: audio ? audio.src : null,
         audioLocale: msg.audioLocale,
       };
       this.perUserMessages[msg.recipient.username] = { ...messages };
@@ -165,7 +154,6 @@ export default {
       if (!audioMessage || !audioMessage.url) {
         return;
       }
-
       const messages = this.perUserMessages[msg.author.username];
       let maxIndex = Object.keys(messages).sort().reverse()[0];
       maxIndex = maxIndex ? Number(maxIndex) + 1 : 0;
@@ -179,7 +167,6 @@ export default {
           audioMessage: audioMessage.url,
         },
       };
-
       const apiMessage = {
         roomId: msg.roomId,
         author: {
@@ -191,7 +178,6 @@ export default {
           locale: msg.author.audioLocale,
         },
       }
-
       const reader = new FileReader();
       reader.onloadend = async () => {
         await this.updateTranscribedMessage(reader, apiMessage);
