@@ -120,10 +120,16 @@ public class SpeechToText implements BackgroundFunction<PubSubMessage> {
       publishTranscribedMessage(exchangeMessage);
     } catch (IOException | SQLException ex) {
       logger.log(Level.SEVERE, "Failed to convert audio to text: [" + messageId + "]", ex);
-    } finally {
       try {
         if (connection != null) {
           connection.rollback();
+        }
+      } catch (SQLException se) {
+        se.printStackTrace();
+      }
+    } finally {
+      try {
+        if (connection != null) {
           connection.close();
         }
       } catch (SQLException se) {

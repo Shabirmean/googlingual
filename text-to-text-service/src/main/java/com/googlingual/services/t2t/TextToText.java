@@ -126,10 +126,16 @@ public class TextToText implements BackgroundFunction<PubSubMessage> {
       }
     } catch (Exception ex) {
       ex.printStackTrace();
-    } finally {
       try {
         if (connection != null) {
           connection.rollback();
+        }
+      } catch (SQLException se) {
+        se.printStackTrace();
+      }
+    } finally {
+      try {
+        if (connection != null) {
           connection.close();
         }
       } catch (SQLException se) {

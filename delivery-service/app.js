@@ -108,7 +108,13 @@ async function getUsers(chatRoom) {
   if (allUsers && allUsers.length > 0) {
     return allUsers;
   }
-  allUsers = await fetchConnectedUsers(chatRoom);
+  try {
+    allUsers = await fetchConnectedUsers(chatRoom);
+  } catch (err) {
+    console.log(err);
+    allUsers = [];
+  }
+  return allUsers;
 }
 
 async function fetchConnectedUsers(chatRoom) {
@@ -131,7 +137,7 @@ async function fetchConnectedUsers(chatRoom) {
 async function handlePubSubMessage(message) {
   const payload = JSON.parse(message.data);
   console.log(`Received message ${message.id} with attributes: `, message.attributes);
-  console.log(message);
+  // console.log(payload);
 
   const chatMessage = payload.message;
   const chatRoom = chatMessage.chatRoomId;
@@ -144,20 +150,8 @@ async function handlePubSubMessage(message) {
     }
 
     const isAudio = !!chatMessage.audioMessage;
-    if (isAudio) { //  && chatMessage.audioLocale === 'ta-IN') {
-      console.log(`Matching Audio Locale: ${chatMessage.id} - ${chatMessage.audioLocale }`);
-    }
-
     if ((isAudio && userInfoMap[uId].audioLocale === chatMessage.audioLocale) ||
         (!isAudio && userInfoMap[uId].textLocale === chatMessage.messageLocale)) {
-      // console.log(payload);
-      console.log(`MessageId: ${chatMessage.id} - ${chatMessage.messageIndex}`);
-      console.log(`Condition Audio: ${isAudio && userInfoMap[uId].audioLocale === chatMessage.audioLocale}`);
-      console.log(`Condition Test: ${!isAudio && userInfoMap[uId].textLocale === chatMessage.messageLocale}`);
-      // console.log('----------------------------------');
-      // const printPay = { ...payload, audioMessage: null };
-      // console.log(printPay)
-      console.log('----------------------------------');
       socketIdList.forEach(sockId => {
         if (socketsMap[sockId]) {
           // console.log(`Socket found for userId: ${uId} --> ${sockId}`);
@@ -165,39 +159,15 @@ async function handlePubSubMessage(message) {
         }
       });
     }
-
-
-    // const isAudioButLocaleMismatch = isAudio && userInfoMap[uId].audioLocale !== chatMessage.audioLocale;
-    // const isAudioButAudioDisabled = isAudio && !userInfoMap[uId].audioEnabled;
-    // const isNotAudioButTextLocaleMismatch = !isAudio && userInfoMap[uId].textLocale !== chatMessage.messageLocale;
-    // // console.log(`chatMessage.audioMessage : ${!!chatMessage.audioMessage} - ${chatMessage.audioLocale}`);
-    // // console.log(`isAudioButLocaleMismatch: ${isAudioButLocaleMismatch}`);
-    // // console.log(`isAudioButAudioDisabled: ${isAudioButAudioDisabled}`);
-    // // console.log(`isNotAudioButTextLocaleMismatch: ${isNotAudioButTextLocaleMismatch}`);
-
-    // if (userInfoMap[uId].audioLocale === chatMessage.audioLocale) {
-    //   console.log(`HERE:>>> ${chatMessage.messageIndex} - ${!!chatMessage.audioMessage}`);
-    // }
-
-    // if (isAudioButLocaleMismatch || isAudioButAudioDisabled || isNotAudioButTextLocaleMismatch) {
-    //   return;
-    // }
-    // console.log(payload);
-    // socketIdList.forEach(sockId => {
-    //   if (socketsMap[sockId]) {
-    //     console.log(`Socket found for userId: ${uId} --> ${sockId}`);
-    //     socketsMap[sockId].emit('chatRoomMessage', chatMessage);
-    //   }
-    // });
   });
   message.ack();
 }
 
 function listenForMessages(socketsMap) {
   console.log("Registering subscriber....");
-  // const textSubscription = pubSubClientForText.subscription(textMessageSubscription);
+  const textSubscription = pubSubClientForText.subscription(textMessageSubscription);
   const audioSubscription = pubSubClientForAudio.subscription(audioMessageSubscription);
-  // textSubscription.on('message', handlePubSubMessage);
+  textSubscription.on('message', handlePubSubMessage);
   audioSubscription.on('message', handlePubSubMessage);
 }
 

@@ -74,7 +74,6 @@ export default {
       if (payload.sender === this.user.id) {
         return;
       }
-      console.log(!!payload.audioMessage);
       this.$emit('appendMessage', {
         recipient: this.user,
         ...payload,

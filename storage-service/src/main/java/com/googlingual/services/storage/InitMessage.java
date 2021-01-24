@@ -117,10 +117,16 @@ public class InitMessage implements BackgroundFunction<PubSubMessage> {
       insertMessageStmt.close();
     } catch (Exception ex) {
       ex.printStackTrace();
-    } finally {
       try {
         if (connection != null) {
           connection.rollback();
+        }
+      } catch (SQLException se) {
+        se.printStackTrace();
+      }
+    } finally {
+      try {
+        if (connection != null) {
           connection.close();
         }
       } catch (SQLException se) {

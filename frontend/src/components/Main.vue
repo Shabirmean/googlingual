@@ -156,6 +156,8 @@ export default {
         id: msg.messageIndex,
         textMessage: msg.message,
         textLocale: msg.messageLocale,
+        audioMessage: msg.audioMessage,
+        audioLocale: msg.audioLocale,
       };
       this.perUserMessages[msg.recipient.username] = { ...messages };
     },
