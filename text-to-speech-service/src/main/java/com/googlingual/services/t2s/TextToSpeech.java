@@ -108,6 +108,7 @@ public class TextToSpeech implements BackgroundFunction<PubSubMessage> {
       updateMessageQuery.close();
       logger.info(String.format("Inserted translated audio for message [id: %s]\n[lang: %s]\n[%s]",
           messageDao.getId(), destinationLocale, encodedMessage));
+      exchangeMessage.getMessage().setAudioLocale(destinationLocale);
       publishTranslatedMessage(exchangeMessage);
     } catch (IOException | SQLException ex) {
       logger.log(Level.SEVERE, "Failed to convert text to audio: [" + textToBeMadeAudio + "]", ex);

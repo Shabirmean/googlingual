@@ -116,7 +116,7 @@ export default {
       return users.find((a) => a.id == uId);
     },
     async sendMessage(msg) {
-      if (!msg.textMessage) {
+      if (!msg.textMessage || msg.textMessage === '\n') {
         return;
       }
       const messages = this.perUserMessages[msg.author.username];

@@ -10,9 +10,9 @@ import socketio from 'socket.io-client';
 import ChatWindow from "./ChatWindow.vue";
 import InputArea from "./InputArea.vue";
 
-// const SOCKETS_API = (process.env.SOCKET_SERVER_URL) ?
-//   process.env.SOCKET_SERVER_URL : 'http://localhost:8081';
-const SOCKETS_API = 'https://googlingual-delivery-dot-gcloud-dpe.ue.r.appspot.com';
+const SOCKETS_API = (process.env.SOCKET_SERVER_URL) ?
+  process.env.SOCKET_SERVER_URL : 'http://localhost:8081';
+// const SOCKETS_API = 'https://googlingual-delivery-dot-gcloud-dpe.ue.r.appspot.com';
 
 export default {
   name: "UserWindow",
@@ -71,10 +71,10 @@ export default {
       console.log(`User registration message:`, data);
     },
     chatRoomMessage(payload) {
-      console.log(payload);
       if (payload.sender === this.user.id) {
         return;
       }
+      console.log(payload);
       this.$emit('appendMessage', {
         recipient: this.user,
         ...payload,
