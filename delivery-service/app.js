@@ -101,7 +101,15 @@ const createPool = async () => {
 };
 
 const createPoolAndEnsureSchema = async () => await createPool();
+let allUsers;
 let dbPool;
+
+async function getUsers(chatRoom) {
+  if (allUsers && allUsers.length > 0) {
+    return allUsers;
+  }
+  allUsers = await fetchConnectedUsers(chatRoom);
+}
 
 async function fetchConnectedUsers(chatRoom) {
   dbPool = dbPool || (await createPoolAndEnsureSchema());
@@ -123,44 +131,73 @@ async function fetchConnectedUsers(chatRoom) {
 async function handlePubSubMessage(message) {
   const payload = JSON.parse(message.data);
   console.log(`Received message ${message.id} with attributes: `, message.attributes);
-  // console.log(payload);
+  console.log(message);
 
   const chatMessage = payload.message;
   const chatRoom = chatMessage.chatRoomId;
-  const roomUsers = await fetchConnectedUsers(chatRoom);
+  const roomUsers = await getUsers(chatRoom);
   roomUsers.forEach(user => {
     const uId = user.user_id;
     const socketIdList = userToSocketIdsMap[uId];
     if (!socketIdList || !userInfoMap[uId]) {
       return;
     }
+
     const isAudio = !!chatMessage.audioMessage;
-    const isAudioButLocaleMismatch = isAudio && userInfoMap[uId].audioLocale !== chatMessage.audioLocale;
-    const isAudioButAudioDisabled = isAudio && !userInfoMap[uId].audioEnabled;
-    const isNotAudioButTextLocaleMismatch = !isAudio && userInfoMap[uId].textLocale !== chatMessage.messageLocale;
-    console.log(`chatMessage.audioMessage : ${!!chatMessage.audioMessage} - ${chatMessage.audioLocale}`);
-    console.log(`isAudioButLocaleMismatch: ${isAudioButLocaleMismatch}`);
-    console.log(`isAudioButAudioDisabled: ${isAudioButAudioDisabled}`);
-    console.log(`isNotAudioButTextLocaleMismatch: ${isNotAudioButTextLocaleMismatch}`);
-    if (isAudioButLocaleMismatch || isAudioButAudioDisabled || isNotAudioButTextLocaleMismatch) {
-      return;
+    if (isAudio) { //  && chatMessage.audioLocale === 'ta-IN') {
+      console.log(`Matching Audio Locale: ${chatMessage.id} - ${chatMessage.audioLocale }`);
     }
-    console.log(payload);
-    socketIdList.forEach(sockId => {
-      if (socketsMap[sockId]) {
-        console.log(`Socket found for userId: ${uId} --> ${sockId}`);
-        socketsMap[sockId].emit('chatRoomMessage', chatMessage);
-      }
-    });
+
+    if ((isAudio && userInfoMap[uId].audioLocale === chatMessage.audioLocale) ||
+        (!isAudio && userInfoMap[uId].textLocale === chatMessage.messageLocale)) {
+      // console.log(payload);
+      console.log(`MessageId: ${chatMessage.id} - ${chatMessage.messageIndex}`);
+      console.log(`Condition Audio: ${isAudio && userInfoMap[uId].audioLocale === chatMessage.audioLocale}`);
+      console.log(`Condition Test: ${!isAudio && userInfoMap[uId].textLocale === chatMessage.messageLocale}`);
+      // console.log('----------------------------------');
+      // const printPay = { ...payload, audioMessage: null };
+      // console.log(printPay)
+      console.log('----------------------------------');
+      socketIdList.forEach(sockId => {
+        if (socketsMap[sockId]) {
+          // console.log(`Socket found for userId: ${uId} --> ${sockId}`);
+          socketsMap[sockId].emit('chatRoomMessage', chatMessage);
+        }
+      });
+    }
+
+
+    // const isAudioButLocaleMismatch = isAudio && userInfoMap[uId].audioLocale !== chatMessage.audioLocale;
+    // const isAudioButAudioDisabled = isAudio && !userInfoMap[uId].audioEnabled;
+    // const isNotAudioButTextLocaleMismatch = !isAudio && userInfoMap[uId].textLocale !== chatMessage.messageLocale;
+    // // console.log(`chatMessage.audioMessage : ${!!chatMessage.audioMessage} - ${chatMessage.audioLocale}`);
+    // // console.log(`isAudioButLocaleMismatch: ${isAudioButLocaleMismatch}`);
+    // // console.log(`isAudioButAudioDisabled: ${isAudioButAudioDisabled}`);
+    // // console.log(`isNotAudioButTextLocaleMismatch: ${isNotAudioButTextLocaleMismatch}`);
+
+    // if (userInfoMap[uId].audioLocale === chatMessage.audioLocale) {
+    //   console.log(`HERE:>>> ${chatMessage.messageIndex} - ${!!chatMessage.audioMessage}`);
+    // }
+
+    // if (isAudioButLocaleMismatch || isAudioButAudioDisabled || isNotAudioButTextLocaleMismatch) {
+    //   return;
+    // }
+    // console.log(payload);
+    // socketIdList.forEach(sockId => {
+    //   if (socketsMap[sockId]) {
+    //     console.log(`Socket found for userId: ${uId} --> ${sockId}`);
+    //     socketsMap[sockId].emit('chatRoomMessage', chatMessage);
+    //   }
+    // });
   });
   message.ack();
 }
 
 function listenForMessages(socketsMap) {
   console.log("Registering subscriber....");
-  const textSubscription = pubSubClientForText.subscription(textMessageSubscription);
+  // const textSubscription = pubSubClientForText.subscription(textMessageSubscription);
   const audioSubscription = pubSubClientForAudio.subscription(audioMessageSubscription);
-  textSubscription.on('message', handlePubSubMessage);
+  // textSubscription.on('message', handlePubSubMessage);
   audioSubscription.on('message', handlePubSubMessage);
 }
 

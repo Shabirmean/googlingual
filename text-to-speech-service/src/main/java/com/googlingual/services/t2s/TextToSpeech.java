@@ -106,8 +106,9 @@ public class TextToSpeech implements BackgroundFunction<PubSubMessage> {
       updateMessageQuery.executeUpdate();
       connection.commit();
       updateMessageQuery.close();
-      logger.info(String.format("Inserted translated audio for message [id: %s]\n[lang: %s]\n[%s]",
-          messageDao.getId(), destinationLocale, encodedMessage));
+      logger.info(String.format("Inserted translated audio for message [id: %s]\n[index: %s]\n[lang: %s]\n[%s]",
+          messageDao.getId(), messageDao.getMessageIndex(), destinationLocale, encodedMessage));
+      exchangeMessage.getMessage().setAudioMessage(encodedMessage);
       exchangeMessage.getMessage().setAudioLocale(destinationLocale);
       publishTranslatedMessage(exchangeMessage);
     } catch (IOException | SQLException ex) {
