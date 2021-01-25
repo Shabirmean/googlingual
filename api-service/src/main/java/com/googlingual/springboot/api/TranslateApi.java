@@ -74,7 +74,6 @@ public class TranslateApi {
       List<Voice> langVoices = langVoiceResponse.getVoicesList();
       Set<String> voiceCodes = new HashSet<>();
       langVoices.forEach(v -> {
-        logger.info(String.format("Name [%s] and Gender [%s]", v.getName(), v.getSsmlGender().getDescriptorForType().getFullName()));
         int langCodesSize = v.getLanguageCodesList().size();
         for (int i = 0; i < langCodesSize; i++) {
           voiceCodes.add(v.getLanguageCodes(i));
