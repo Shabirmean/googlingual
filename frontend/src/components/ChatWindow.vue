@@ -1,5 +1,16 @@
 <template>
   <div>
+    <div class="locale-select locale-area">
+      <div class="text-locale">
+        <b-form-select v-model="selectedTextLocale" :options="textLocaleOptions" class="select-audio bg-dark text-white"></b-form-select>
+      </div>
+      <div class="audio-locale">
+        <b-form-select v-model="selectedAudioLocale" :options="audioLocaleOptions" class="select-audio bg-dark text-white"></b-form-select>
+        <b-form-checkbox v-model="audioEnabled" class="check-box">
+          {{ isAudioEnabled }}
+        </b-form-checkbox>
+      </div>
+    </div>
     <section ref="chatArea" class="chat-area">
         <div
           v-for="message in chatMessages"
@@ -34,6 +45,34 @@ export default {
       required: true,
     },
   },
+  data: () => {
+    return {
+      selectedTextLocale: null,
+      selectedAudioLocale: null,
+      audioEnabled: false,
+      textLocaleOptions: [
+        { value: 'a', text: 'This is First option' },
+        { value: 'b', text: 'Selected Option' },
+        { value: { C: '3PO' }, text: 'This is an option with object value' },
+        { value: 'd', text: 'This one is disabled', disabled: true }
+      ],
+      audioLocaleOptions: [
+        { value: 'a', text: 'This is First option' },
+        { value: 'b', text: 'Selected Option' },
+        { value: { C: '3PO' }, text: 'This is an option with object value' },
+        { value: 'd', text: 'This one is disabled', disabled: true }
+      ],
+    };
+  },
+  computed: {
+    isAudioEnabled() {
+      return this.audioEnabled ? 'Voice message enabled' : 'You will not receive voice messages';
+    },
+  },
+  created() {
+    this.selectedTextLocale = this.textLocaleOptions[0].value;
+    this.selectedAudioLocale = this.audioLocaleOptions[0].value;
+  },
 };
 </script>
 
@@ -48,5 +87,29 @@ export default {
   max-width: 900px;
   margin: 2em auto 2em auto;
   box-shadow: 2px 2px 5px 2px rgba(0, 0, 0, 0.3);
+}
+.locale-area {
+  /*   border: 1px solid #39403d; */
+  background: #5f6b6b24;
+  overflow: auto;
+  max-width: 900px;
+  margin: 2em auto 2em auto;
+  box-shadow: 2px 2px 5px 2px rgba(0, 0, 0, 0.3);
+}
+.locale-select {
+  display: flex;
+}
+.audio-locale {
+  flex: 1;
+  margin: 15px;
+}
+.text-locale {
+  flex: 1;
+  margin: 15px;
+}
+.check-box {
+  display: flex;
+  margin-top: 10px;
+  font-weight: 900;
 }
 </style>

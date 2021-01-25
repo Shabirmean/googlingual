@@ -43,9 +43,10 @@ public class TextToSpeech implements BackgroundFunction<PubSubMessage> {
   private static final String PROJECT_GCLOUD_DPE = "gcloud-dpe";
   private static final int DEFAULT_SQL_POOL_SIZE = 10;
   private static DataSource pool = null;
+  private static TextToSpeechClient textToSpeechClient;
   private static final Map<String, Publisher> publisherMap = new HashMap<>();
 
-  private static Publisher getPublisher(String topic) throws IOException {
+  private Publisher getPublisher(String topic) throws IOException {
     Publisher publisher = publisherMap.get(topic);
     if (publisher == null) {
       publisher = Publisher.newBuilder(ProjectTopicName.of(PROJECT_GCLOUD_DPE, topic)).build();
@@ -54,7 +55,14 @@ public class TextToSpeech implements BackgroundFunction<PubSubMessage> {
     return publisher;
   }
 
-  private static Connection getConnection(int poolSize) throws SQLException {
+  private TextToSpeechClient getTextToSpeechClient() throws IOException {
+    if (textToSpeechClient == null) {
+      textToSpeechClient = TextToSpeechClient.create();
+    }
+    return textToSpeechClient;
+  }
+
+  private Connection getConnection(int poolSize) throws SQLException {
     if (pool == null) {
       HikariConfig config = new HikariConfig();
       config.setJdbcUrl(String.format("jdbc:mysql:///%s", DB_NAME));
@@ -82,7 +90,8 @@ public class TextToSpeech implements BackgroundFunction<PubSubMessage> {
     String textToBeMadeAudio = messageDao.getMessage();
     String destinationLocale = exchangeMessage.getDestinationLocale();
     // Instantiates a client
-    try (TextToSpeechClient textToSpeechClient = TextToSpeechClient.create()) {
+    try {
+      TextToSpeechClient textToSpeechClient = getTextToSpeechClient();
       // Set the text input to be synthesized
       SynthesisInput input = SynthesisInput.newBuilder().setText(textToBeMadeAudio).build();
       // Build the voice request, select the language code ("en-US") and the ssml voice gender ("neutral")

@@ -1,5 +1,5 @@
 <template>
-  <div :class="windowTheme">
+  <div :class="windowTheme" class="user-container">
     <ChatWindow :chatMessages="chatMessages" :userId="user.id"></ChatWindow>
     <InputArea @addMessage="addMessage" @addAudioMessage="addAudioMessage"></InputArea>
   </div>
@@ -105,5 +105,9 @@ export default {
 .right-container {
   flex: 50%;
   background: #b78d9c66;
+}
+.user-container {
+  padding-left: 24px;
+  padding-right: 24px;
 }
 </style>

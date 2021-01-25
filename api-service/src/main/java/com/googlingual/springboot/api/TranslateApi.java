@@ -1,6 +1,13 @@
 package com.googlingual.springboot.api;
 
 import com.google.cloud.pubsub.v1.Publisher;
+import com.google.cloud.texttospeech.v1.ListVoicesResponse;
+import com.google.cloud.texttospeech.v1.TextToSpeechClient;
+import com.google.cloud.texttospeech.v1.Voice;
+import com.google.cloud.translate.Language;
+import com.google.cloud.translate.Translate;
+import com.google.cloud.translate.TranslateOptions;
+import com.google.gson.Gson;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
@@ -8,12 +15,17 @@ import com.googlingual.springboot.exception.GooglingualApiException;
 import com.googlingual.springboot.sdk.ChatMessage;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,11 +34,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("v1")
 @CrossOrigin(origins = "*")
-public class Translate {
-  private static final Logger logger = Logger.getLogger(Translate.class.getName());
+public class TranslateApi {
+
+  private static final Logger logger = Logger.getLogger(TranslateApi.class.getName());
   private static final String CF_PUBLISH_TOPIC = "hello-world-sub";
   private static final String PROJECT_ID = "gcloud-dpe";
-  Publisher publisher = createPublisher();
+  private static final String PROJECT_GCLOUD_DPE = "gcloud-dpe";
+  private static final String NEW_UNTRANSLATED_MESSAGE = "new-untranslated-message";
+  private static final Gson GSON = new Gson();
+  private static TextToSpeechClient textToSpeechClient;
+  private static final Translate translationService = TranslateOptions.getDefaultInstance().getService();
+  private static final Publisher publisher = createPublisher();
 
   @PostMapping(path = "/send", consumes = "application/json")
   public void send(@RequestBody ChatMessage chatMessage) throws GooglingualApiException {
@@ -44,9 +62,41 @@ public class Translate {
     }
   }
 
+  @GetMapping(path = "/locales", produces = "application/json")
+  public String getAudioLocales() {
+    List<Language> languages = translationService.listSupportedLanguages();
+    return GSON.toJson(languages);
+  }
+
+  @GetMapping(path = "/audioLocales/{lang}", produces = "application/json")
+  public String getLocales(@PathVariable String lang) throws GooglingualApiException {
+    try {
+      TextToSpeechClient client = getTextToSpeechClient();
+      ListVoicesResponse langVoiceResponse = client.listVoices(lang);
+      List<Voice> langVoices = langVoiceResponse.getVoicesList();
+      Set<String> voiceCodes = new HashSet<>();
+      for (Voice v: langVoices) {
+        logger.info(String.format("Name [%s] and Gender [%s]", v.getName(), v.getSsmlGender().getDescriptorForType().getFullName()));
+        voiceCodes.add(v.getName());
+      }
+      return GSON.toJson(voiceCodes);
+    } catch (IOException e) {
+      String errMsg = String.format("Failed to get voices for locale [%s]. The GCloud client failed", lang);
+      logger.log(Level.SEVERE, errMsg, e);
+      throw new GooglingualApiException(errMsg + "\n\t" + e.getMessage());
+    }
+  }
+
+  private TextToSpeechClient getTextToSpeechClient() throws IOException {
+    if (textToSpeechClient == null) {
+      textToSpeechClient = TextToSpeechClient.create();
+    }
+    return textToSpeechClient;
+  }
+
   private static Publisher createPublisher() {
     try {
-      return Publisher.newBuilder(ProjectTopicName.of("gcloud-dpe", "new-untranslated-message")).build();
+      return Publisher.newBuilder(ProjectTopicName.of(PROJECT_GCLOUD_DPE, NEW_UNTRANSLATED_MESSAGE)).build();
     } catch (IOException e) {
       e.printStackTrace();
       return null;
