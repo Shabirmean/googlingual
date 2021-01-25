@@ -11,10 +11,12 @@ import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
 import com.googlingual.springboot.exception.GooglingualApiException;
+import com.googlingual.springboot.sdk.ApiResponse;
 import com.googlingual.springboot.sdk.Author;
 import com.googlingual.springboot.sdk.ChatMessage;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -64,7 +66,8 @@ public class TranslateApi {
   @GetMapping(path = "/locales", produces = "application/json")
   public String getLocales() {
     List<Language> languages = TranslateOptions.getDefaultInstance().getService().listSupportedLanguages();
-    return GSON.toJson(languages);
+    ApiResponse apiResponse = new ApiResponse("locales", languages);
+    return GSON.toJson(apiResponse);
   }
 
   @GetMapping(path = "/audioLocales/{lang}", produces = "application/json")
@@ -79,7 +82,8 @@ public class TranslateApi {
           voiceCodes.add(v.getLanguageCodes(i));
         }
       });
-      return GSON.toJson(voiceCodes);
+      ApiResponse apiResponse = new ApiResponse("audioLocales", new ArrayList<>(voiceCodes));
+      return GSON.toJson(apiResponse);
     } catch (IOException e) {
       String errMsg = String.format("Failed to get voices for locale [%s]. The GCloud client failed", lang);
       logger.log(Level.SEVERE, errMsg, e);
