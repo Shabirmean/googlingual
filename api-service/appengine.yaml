@@ -17,5 +17,5 @@ service: googlingual-api-service
 runtime: java11
 resources:
   cpu: 2
-  memory_gb: 2
+  memory_gb: 2.3
 # [END gae_java11_helloworld_yaml]
