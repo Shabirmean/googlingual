@@ -80,6 +80,7 @@ public class TranslateApi {
       for (Voice v: langVoices) {
         logger.info(String.format("Name [%s] and Gender [%s]", v.getName(), v.getSsmlGender().getDescriptorForType().getFullName()));
         voiceCodes.add(v.getName());
+        v.getLanguageCodesList().asByteStringList().stream().map(ByteString::toString).forEach(voiceCodes::add);
       }
       return GSON.toJson(voiceCodes);
     } catch (IOException e) {

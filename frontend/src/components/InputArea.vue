@@ -5,7 +5,6 @@
         <label for="chatMessage">Your message</label>
         <textarea v-on:keyup.enter="addMessage"
           class="form-control rounded-0"
-          id="chatMessage"
           rows="2"
           cols="100"
           v-model="message"
