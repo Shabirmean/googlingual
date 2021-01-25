@@ -23,5 +23,11 @@ export default {
         'Content-Type': 'application/json'
       }
     });
+  },
+  locales() {
+    return axios.get(`${BASE_URL}/v1/locales`);
+  },
+  audioLocales(lang) {
+    return axios.get(`${BASE_URL}/v1/audioLocales/${lang}`);
   }
 }

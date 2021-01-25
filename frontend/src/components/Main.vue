@@ -85,6 +85,8 @@ export default {
         shabirmean: DUMMY_MSGS,
         kairunnisa: DUMMY_MSGS
       },
+      locales: [],
+      voices: [],
     };
   },
   computed: {
@@ -94,6 +96,10 @@ export default {
     chatMessagesForMom() {
       return Object.values(this.perUserMessages.kairunnisa).sort((a, b) => a.id < b.id);
     },
+  },
+  async created() {
+    this.locales = await GooglingualApi.locales();
+    this.voices = await GooglingualApi.audioLocales('en');
   },
   methods: {
     getUser(uId) {

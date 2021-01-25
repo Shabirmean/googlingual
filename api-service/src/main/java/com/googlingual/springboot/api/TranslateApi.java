@@ -12,6 +12,7 @@ import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
 import com.googlingual.springboot.exception.GooglingualApiException;
+import com.googlingual.springboot.sdk.Author;
 import com.googlingual.springboot.sdk.ChatMessage;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -43,8 +44,8 @@ public class TranslateApi {
   private static final String NEW_UNTRANSLATED_MESSAGE = "new-untranslated-message";
   private static final Gson GSON = new Gson();
   private static TextToSpeechClient textToSpeechClient;
-  private static final Translate translationService = TranslateOptions.getDefaultInstance().getService();
-  private static final Publisher publisher = createPublisher();
+  private static Translate translationService;
+  private static Publisher publisher;
 
   @PostMapping(path = "/send", consumes = "application/json")
   public void send(@RequestBody ChatMessage chatMessage) throws GooglingualApiException {
@@ -53,7 +54,8 @@ public class TranslateApi {
     PubsubMessage pubsubApiMessage = PubsubMessage.newBuilder().setData(byteStr).build();
     try {
       logger.info("Publishing message: " + publishMessage);
-      publisher.publish(pubsubApiMessage).get();
+      Publisher localPublisher = createPublisher(chatMessage.getAuthor());
+      localPublisher.publish(pubsubApiMessage).get();
     } catch (InterruptedException | ExecutionException | NullPointerException e) {
       String errMsg = String.format("Failed to publish message from user [%s] to chatRoom [%s]",
           chatMessage.getAuthor().getId(), chatMessage.getRoomId());
@@ -63,13 +65,13 @@ public class TranslateApi {
   }
 
   @GetMapping(path = "/locales", produces = "application/json")
-  public String getAudioLocales() {
-    List<Language> languages = translationService.listSupportedLanguages();
+  public String getLocales() {
+    List<Language> languages = getTranslationService().listSupportedLanguages();
     return GSON.toJson(languages);
   }
 
   @GetMapping(path = "/audioLocales/{lang}", produces = "application/json")
-  public String getLocales(@PathVariable String lang) throws GooglingualApiException {
+  public String getAudioLocales(@PathVariable String lang) throws GooglingualApiException {
     try {
       TextToSpeechClient client = getTextToSpeechClient();
       ListVoicesResponse langVoiceResponse = client.listVoices(lang);
@@ -87,6 +89,13 @@ public class TranslateApi {
     }
   }
 
+  private Translate getTranslationService() {
+    if (translationService == null) {
+      translationService = TranslateOptions.getDefaultInstance().getService();
+    }
+    return translationService;
+  }
+
   private TextToSpeechClient getTextToSpeechClient() throws IOException {
     if (textToSpeechClient == null) {
       textToSpeechClient = TextToSpeechClient.create();
@@ -94,13 +103,17 @@ public class TranslateApi {
     return textToSpeechClient;
   }
 
-  private static Publisher createPublisher() {
+  private static Publisher createPublisher(Author author) throws GooglingualApiException {
     try {
-      return Publisher.newBuilder(ProjectTopicName.of(PROJECT_GCLOUD_DPE, NEW_UNTRANSLATED_MESSAGE)).build();
+      if (publisher == null) {
+        publisher = Publisher.newBuilder(ProjectTopicName.of(PROJECT_GCLOUD_DPE, NEW_UNTRANSLATED_MESSAGE)).build();
+      }
     } catch (IOException e) {
-      e.printStackTrace();
-      return null;
+      String errMsg = String.format("Failed to create publisher to broadcast new message from [%s - %s]", author.getId(), author.getUsername());
+      logger.log(Level.SEVERE, errMsg, e);
+      throw new GooglingualApiException(errMsg + "\n\t" + e.getMessage());
     }
+    return publisher;
   }
 
   @GetMapping("/hello")
