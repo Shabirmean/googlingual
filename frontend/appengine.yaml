@@ -12,7 +12,7 @@
 # limitations under the License.
 
 # [START gae_quickstart_yaml]
-service: googlingual-frontend-stg
+service: ui-stg
 runtime: nodejs14
 
 handlers:
