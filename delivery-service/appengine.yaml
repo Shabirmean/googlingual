@@ -1,5 +1,5 @@
 # [START appengine_websockets_yaml]
-service: googlingual-delivery
+service: googlingual-delivery-stg
 runtime: nodejs
 env: flex
 

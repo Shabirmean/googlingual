@@ -1,5 +1,11 @@
 steps:
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  args: ['gcloud', 'functions', 'deploy', 'speech-to-text-service', '--entry-point', 'com.googlingual.services.s2t.SpeechToText', '--runtime', 'java11', '--trigger-topic', 'new-speech-to-text-message']
+  args: ['gcloud', 'functions', 'deploy', 'speech-to-text-service-stg',
+  '--entry-point', 'com.googlingual.services.s2t.SpeechToText',
+  '--runtime', 'java11',
+  '--timeout', '180',
+  '--vpc-connector', 'projects/$GCP_PROJECT/locations/us-central1/connectors/googlingual-connector',
+  '--memory', '512MB',
+  '--trigger-topic', 'new-speech-to-text-message']
   dir: 'speech-to-text-service'
 timeout: "1600s"

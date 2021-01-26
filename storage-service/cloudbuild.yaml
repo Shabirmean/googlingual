@@ -1,5 +1,11 @@
 steps:
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  args: ['gcloud', 'functions', 'deploy', 'storage-service', '--entry-point', 'com.googlingual.services.storage.InitMessage', '--runtime', 'java11', '--trigger-topic', 'new-untranslated-message']
+  args: ['gcloud', 'functions', 'deploy', 'storage-service-stg',
+  '--entry-point', 'com.googlingual.services.storage.InitMessage',
+  '--runtime', 'java11',
+  '--timeout', '60',
+  '--vpc-connector', 'projects/$GCP_PROJECT/locations/us-central1/connectors/googlingual-connector',
+  '--memory', '256MB',
+  '--trigger-topic', 'new-untranslated-message']
   dir: 'storage-service'
 timeout: "1600s"
