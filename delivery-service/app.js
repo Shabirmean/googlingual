@@ -53,11 +53,13 @@ io.on('connection', socket => {
     const existingConnections = userToSocketIdsMap[userId] || [];
     userToSocketIdsMap[userId] = [ ...existingConnections, socketId];
     socketIdToUserMap[socketId] = userId;
-    userInfoMap[userId] = {
-      textLocale: data.textLocale,
-      audioLocale: data.audioLocale,
-    }
+    updateUserInfomation(data);
     io.emit('userRegistered', data);
+  });
+
+  socket.on('updateUserPref', (data) => {
+    console.log(`Updating user preferences on [${socket.id}] for user ${data.uId}`);
+    updateUserInfomation(data);
   });
 
   socket.on('disconnect', () => {
@@ -65,6 +67,14 @@ io.on('connection', socket => {
     cleanUpSocketReferences(socket);
   });
 });
+
+function updateUserInfomation(data) {
+  const userId = data.uId;
+  userInfoMap[userId] = {
+    textLocale: data.textLocale,
+    audioLocale: data.audioLocale,
+  }
+}
 
 function cleanUpSocketReferences(socket) {
   const userId = socketIdToUserMap[socket.id];

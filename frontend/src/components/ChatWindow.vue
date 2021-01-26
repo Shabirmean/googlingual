@@ -2,11 +2,11 @@
   <div>
     <div class="locale-select locale-area">
       <div class="text-locale">
-        <b-form-select v-model="selectedTextLocale" :options="textLocaleOptions" class="select-audio bg-dark text-white"></b-form-select>
+        <b-form-select v-model="selectedTextLocale" :options="textLocaleOptions" @change="loadAudioLocales" class="select-audio bg-dark text-white"></b-form-select>
       </div>
       <div class="audio-locale">
-        <b-form-select v-model="selectedAudioLocale" :options="audioLocaleOptions" class="select-audio bg-dark text-white"></b-form-select>
-        <b-form-checkbox v-model="audioEnabled" class="check-box">
+        <b-form-select v-model="selectedAudioLocale" :options="audioLocaleOptions" :disabled="hasNone" @change="updateUserPref" class="select-audio bg-dark text-white"></b-form-select>
+        <b-form-checkbox v-model="audioEnabled" :disabled="disableAudioSelect" @change="updateUserPref" class="check-box">
           {{ isAudioEnabled }}
         </b-form-checkbox>
       </div>
@@ -52,11 +52,15 @@ export default {
       type: Array,
       required: true,
     },
+    loadingAudio: {
+      type: Boolean,
+      default: true,
+    },
   },
   data: () => {
     return {
-      selectedTextLocale: { value: 'en', text: 'English' },
-      selectedAudioLocale: { value: 'en-US', text: 'en-US' },
+      selectedTextLocale: null,
+      selectedAudioLocale: null,
       audioEnabled: false,
     };
   },
@@ -64,21 +68,48 @@ export default {
     isAudioEnabled() {
       return this.audioEnabled ? 'Voice message enabled' : 'You will not receive voice messages';
     },
+    hasNone() {
+      return this.audioLocaleOptions.length === 0 || this.selectedAudioLocale === 'None';
+    },
+    disableAudioSelect() {
+      return this.loadingAudio || this.hasNone;
+    },
   },
   created() {
-    this.selectedTextLocale = this.textLocaleOptions[0].value;
-    this.selectedAudioLocale = this.audioLocaleOptions[0].value;
+    const hasEnglish = this.textLocaleOptions.find(l => l.value === 'en');
+    this.selectedTextLocale = hasEnglish ? 'en' : this.textLocaleOptions[0].value;
+    this.loadAudioLocales();
+  },
+  methods: {
+    loadAudioLocales() {
+      this.updateUserPref();
+      this.$emit('loadAudioLocales', this.selectedTextLocale);
+    },
+    updateUserPref() {
+      this.$emit('updateUserPref', {
+        textLocale: this.selectedTextLocale,
+        audioLocale: this.selectedAudioLocale,
+        audioEnabled: this.audioEnabled,
+      });
+    },
   },
   watch: {
     textLocaleOptions(newV, oldV) {
+      const previouslySelected = this.selectedTextLocale;
+      console.log(previouslySelected, this.selectedTextLocale);
       if (!oldV) {
         this.selectedTextLocale = newV[0].value;
+      } else {
+        const selectedOld = newV.find(v => v.value === previouslySelected);
+        this.selectedTextLocale = selectedOld && selectedOld.length > 0 ?
+          selectedOld.value : newV[0].value;
+      }
+      if (previouslySelected !== this.selectedTextLocale) {
+        this.loadAudioLocales();
       }
     },
-    audioLocaleOptions(newV, oldV) {
-      if (!oldV) {
-        this.selectedAudioLocale = newV[0].value;
-      }
+    audioLocaleOptions(newV) {
+      this.selectedAudioLocale = newV[0].value;
     }
   }
 };

@@ -112,7 +112,7 @@ export default {
         [maxIndex.toString()]: {
           id: maxIndex,
           ...msg,
-          textLocale: msg.author.textLocale,
+          textLocale: msg.textLocale,
           textOriginal: msg.textMessage,
         },
       };
@@ -125,7 +125,7 @@ export default {
         },
         text: {
           message: msg.textMessage,
-          locale: msg.author.textLocale,
+          locale: msg.textLocale,
         },
       });
     },
@@ -175,7 +175,7 @@ export default {
         },
         audio: {
           message: null,
-          locale: msg.author.audioLocale,
+          locale: msg.audioLocale,
         },
       }
       const reader = new FileReader();

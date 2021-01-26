@@ -6,7 +6,15 @@
         <div class="bar" style="background-color: #f1c40f; margin-left: 20px;"></div>
         <div class="bar" style="background-color: #27ae60; margin-left: 60px;"></div>
     </div>
-    <ChatWindow v-if="!loading" :chatMessages="chatMessages" :userId="user.id" :textLocaleOptions="textLocaleOptions" :audioLocaleOptions="audioLocaleOptions"></ChatWindow>
+    <ChatWindow v-if="!loading"
+      ref="chatWindow"
+      @loadAudioLocales="loadAudioLocales"
+      @updateUserPref="updateUserPref"
+      :loadingAudio="loadingAudio"
+      :chatMessages="chatMessages"
+      :userId="user.id"
+      :textLocaleOptions="textLocaleOptions"
+      :audioLocaleOptions="audioLocaleOptions"></ChatWindow>
     <InputArea v-if="!loading" @addMessage="addMessage" @addAudioMessage="addAudioMessage"></InputArea>
   </div>
 </template>
@@ -53,9 +61,10 @@ export default {
       socket: socketio(SOCKETS_API),
       loading: true,
       locales: [{ code: 'en', name: 'English' }],
-      voices: ['en-US'],
-      localesLoadTimer: null,
-      audiolocalesLoadTimer: null,
+      voices: ['None'],
+      localesGiveupCount: 0,
+      voicesGiveupCount: 0,
+      fetchingVoices: false,
     };
   },
   async created() {
@@ -64,7 +73,6 @@ export default {
     this.socket.on('userRegistered', this.userRegistered);
     this.socket.on('chatRoomMessage', this.chatRoomMessage);
     await this.loadLocales();
-    this.loading = false;
   },
   computed: {
     textLocaleOptions() {
@@ -81,28 +89,38 @@ export default {
       }, []);
       return localesArr;
     },
+    loadingAudio() {
+      return this.fetchingVoices;
+    },
   },
   methods: {
+    hasElements(arr) {
+      return arr && arr.length > 0;
+    },
     async loadLocales() {
-      this.localesLoadTimer = setInterval(async () => {
-        const localesResp = await GooglingualApi.locales();
-        if (localesResp.status == 200) {
-          this.locales = localesResp.data.results;
-          clearInterval(this.localesLoadTimer);
-          this.loadAudioLocales('en');
-          this.loading = false;
-        }
-      }, 3000);
+      const localesResp = await GooglingualApi.locales();
+      this.localesGiveupCount += 1;
+      if (localesResp.status === 200) {
+        this.locales = this.hasElements(localesResp.data.results) ? localesResp.data.results : [ { code: 'en', name: 'English' } ];
+        this.loading = false;
+        return;
+      }
+      if (this.localesGiveupCount >= 10) {
+        this.loading = false;
+        return;
+      }
+      setTimeout(this.loadLocales, 7500);
     },
     async loadAudioLocales(lang) {
-      this.audiolocalesLoadTimer = setInterval(async () => {
-        const localesResp = await GooglingualApi.audioLocales(lang);
-        if (localesResp.status == 200) {
-          this.voices = localesResp.data.results;
-          clearInterval(this.audiolocalesLoadTimer);
-          this.loading = false;
-        }
-      }, 3000);
+      this.fetchingVoices = true;
+      const localesResp = await GooglingualApi.audioLocales(lang);
+      this.voicesGiveupCount += 1;
+      if (localesResp.status === 200) {
+        this.voices = this.hasElements(localesResp.data.results) ? localesResp.data.results : [ 'None' ];
+      } else if (this.voicesGiveupCount < 10) {
+        setTimeout(this.loadAudioLocales, 7500);
+      }
+      this.fetchingVoices = false;
     },
     connect() {
       console.log(`Connected to sockets server with id: ${this.socket.id}`);
@@ -120,6 +138,13 @@ export default {
     userRegistered(data) {
       console.log(`User registration message:`, data);
     },
+    updateUserPref(pref) {
+      this.socket.emit('updateUserPref', {
+        sId: this.socket.id,
+        uId: this.user.id,
+        ...pref,
+      });
+    },
     chatRoomMessage(payload) {
       if (payload.sender === this.user.id) {
         return;
@@ -132,6 +157,8 @@ export default {
     addMessage(newMessage) {
       this.$emit("sendMessage", {
         textMessage: newMessage,
+        textLocale: this.$refs.chatWindow.selectedTextLocale,
+        audioLocale: this.$refs.chatWindow.selectedAudioLocale,
         author: this.user,
         roomId: this.roomId,
       });
@@ -139,6 +166,8 @@ export default {
     addAudioMessage(audioMessage) {
       this.$emit("sendAudioMessage", {
         textMessage: 'Audio recording...',
+        textLocale: this.$refs.chatWindow.selectedTextLocale,
+        audioLocale: this.$refs.chatWindow.selectedAudioLocale,
         author: this.user,
         roomId: this.roomId,
       }, audioMessage);
