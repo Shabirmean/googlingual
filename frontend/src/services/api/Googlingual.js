@@ -1,24 +1,11 @@
 import axios from 'axios'
 
-const BASE_URL='https://googlingual-api-service-dot-gcloud-dpe.ue.r.appspot.com';
+const API_SERVER_URL = (process.env.VUE_APP_API_SERVER_URL) ?
+  process.env.VUE_APP_API_SERVER_URL : 'http://localhost:8082';
 
 export default {
-  async translate(message) {
-    return axios.post(`${BASE_URL}/translate`, message, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Content-Type': 'application/json'
-      }
-    }).catch((error) => {
-      if (!error.response) {
-        return { status: 500 };
-      }
-    });
-  },
   async send(message) {
-    return axios.post(`${BASE_URL}/v1/send`, message, {
+    return axios.post(`${API_SERVER_URL}/send`, message, {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
@@ -32,7 +19,7 @@ export default {
     });
   },
   async locales() {
-    return axios.get(`${BASE_URL}/v1/locales`, {
+    return axios.get(`${API_SERVER_URL}/locales`, {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
@@ -46,7 +33,7 @@ export default {
     });
   },
   async audioLocales(lang) {
-    return axios.get(`${BASE_URL}/v1/audioLocales/${lang}`, {
+    return axios.get(`${API_SERVER_URL}/audioLocales/${lang}`, {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',

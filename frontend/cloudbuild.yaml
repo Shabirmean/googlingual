@@ -6,6 +6,9 @@ steps:
   args: ['run', 'build']
   dir: 'frontend'
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  args: ['gsutil', '-m', 'cp', '-R', './*', 'gs://www.googlingual.com']
+  dir: 'frontend'
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   args: ['gcloud', 'app', 'deploy', 'appengine.yaml', '--project=$PROJECT_ID']
   dir: 'frontend'
 timeout: "1600s"
