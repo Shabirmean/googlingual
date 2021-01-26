@@ -14,7 +14,8 @@
       :chatMessages="chatMessages"
       :userId="user.id"
       :textLocaleOptions="textLocaleOptions"
-      :audioLocaleOptions="audioLocaleOptions"></ChatWindow>
+      :audioLocaleOptions="audioLocaleOptions"
+      :defaultLocale="defaultLocale"></ChatWindow>
     <InputArea v-if="!loading" @addMessage="addMessage" @addAudioMessage="addAudioMessage"></InputArea>
   </div>
 </template>
@@ -54,6 +55,10 @@ export default {
     avatar: {
       type: String,
       required: true,
+    },
+    defaultLocale: {
+      type: String,
+      default: 'en',
     },
   },
   data: () => {

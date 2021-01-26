@@ -16,6 +16,7 @@
       :user="kairunnisa"
       :avatar="kairunnisa.avatar"
       roomId="cb3bf2c8-56dd-11eb-8833-42010a723002"
+      defaultLocale="ta"
       @sendMessage="sendMessage"
       @sendAudioMessage="sendAudioMessage"
       @appendMessage="appendMessage"

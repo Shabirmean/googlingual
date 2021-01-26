@@ -56,6 +56,10 @@ export default {
       type: Boolean,
       default: true,
     },
+    defaultLocale: {
+      type: String,
+      default: 'en',
+    },
   },
   data: () => {
     return {
@@ -76,8 +80,8 @@ export default {
     },
   },
   created() {
-    const hasEnglish = this.textLocaleOptions.find(l => l.value === 'en');
-    this.selectedTextLocale = hasEnglish ? 'en' : this.textLocaleOptions[0].value;
+    const hasEnglish = this.textLocaleOptions.find(l => l.value === this.defaultLocale);
+    this.selectedTextLocale = hasEnglish ? this.defaultLocale : this.textLocaleOptions[0].value;
     this.loadAudioLocales();
   },
   methods: {
