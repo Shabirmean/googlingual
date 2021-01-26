@@ -117,6 +117,9 @@ export default {
       setTimeout(this.loadLocales, 7500);
     },
     async loadAudioLocales(lang) {
+      if (!lang) {
+        return;
+      }
       this.fetchingVoices = true;
       const localesResp = await GooglingualApi.audioLocales(lang);
       this.voicesGiveupCount += 1;
