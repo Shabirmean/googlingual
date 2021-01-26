@@ -82,6 +82,7 @@ export default {
   created() {
     const hasEnglish = this.textLocaleOptions.find(l => l.value === this.defaultLocale);
     this.selectedTextLocale = hasEnglish ? this.defaultLocale : this.textLocaleOptions[0].value;
+    this.selectedAudioLocale = 'None';
     this.loadAudioLocales();
   },
   methods: {
