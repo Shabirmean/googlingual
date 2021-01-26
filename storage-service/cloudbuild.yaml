@@ -4,7 +4,7 @@ steps:
   '--entry-point', 'com.googlingual.services.storage.InitMessage',
   '--runtime', 'java11',
   '--timeout', '60',
-  '--vpc-connector', 'projects/$GCP_PROJECT/locations/us-central1/connectors/googlingual-connector',
+  '--vpc-connector', 'projects/gcloud-dpe/locations/us-central1/connectors/googlingual-connector',
   '--memory', '256MB',
   '--trigger-topic', 'new-untranslated-message']
   dir: 'storage-service'

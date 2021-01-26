@@ -4,7 +4,7 @@ steps:
   '--entry-point', 'com.googlingual.services.s2t.SpeechToText',
   '--runtime', 'java11',
   '--timeout', '180',
-  '--vpc-connector', 'projects/$GCP_PROJECT/locations/us-central1/connectors/googlingual-connector',
+  '--vpc-connector', 'projects/gcloud-dpe/locations/us-central1/connectors/googlingual-connector',
   '--memory', '512MB',
   '--trigger-topic', 'new-speech-to-text-message']
   dir: 'speech-to-text-service'

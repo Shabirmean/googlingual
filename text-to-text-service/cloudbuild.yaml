@@ -5,7 +5,7 @@ steps:
     '--entry-point', 'com.googlingual.services.t2t.TextToText',
     '--runtime', 'java11',
     '--timeout', '60',
-    '--vpc-connector', 'projects/$GCP_PROJECT/locations/us-central1/connectors/googlingual-connector',
+    '--vpc-connector', 'projects/gcloud-dpe/locations/us-central1/connectors/googlingual-connector',
     '--memory', '256MB',
     '--trigger-topic', 'new-text-to-text-message']
   dir: 'text-to-text-service'
