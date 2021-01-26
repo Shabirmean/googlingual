@@ -44,24 +44,20 @@ export default {
       type: String,
       required: true,
     },
+    textLocaleOptions: {
+      type: Array,
+      required: true,
+    },
+    audioLocaleOptions: {
+      type: Array,
+      required: true,
+    },
   },
   data: () => {
     return {
-      selectedTextLocale: null,
-      selectedAudioLocale: null,
+      selectedTextLocale: { value: 'en', text: 'English' },
+      selectedAudioLocale: { value: 'en-US', text: 'en-US' },
       audioEnabled: false,
-      textLocaleOptions: [
-        { value: 'a', text: 'This is First option' },
-        { value: 'b', text: 'Selected Option' },
-        { value: { C: '3PO' }, text: 'This is an option with object value' },
-        { value: 'd', text: 'This one is disabled', disabled: true }
-      ],
-      audioLocaleOptions: [
-        { value: 'a', text: 'This is First option' },
-        { value: 'b', text: 'Selected Option' },
-        { value: { C: '3PO' }, text: 'This is an option with object value' },
-        { value: 'd', text: 'This one is disabled', disabled: true }
-      ],
     };
   },
   computed: {
@@ -73,6 +69,18 @@ export default {
     this.selectedTextLocale = this.textLocaleOptions[0].value;
     this.selectedAudioLocale = this.audioLocaleOptions[0].value;
   },
+  watch: {
+    textLocaleOptions(newV, oldV) {
+      if (!oldV) {
+        this.selectedTextLocale = newV[0].value;
+      }
+    },
+    audioLocaleOptions(newV, oldV) {
+      if (!oldV) {
+        this.selectedAudioLocale = newV[0].value;
+      }
+    }
+  }
 };
 </script>
 

@@ -1,11 +1,18 @@
 <template>
   <div :class="windowTheme" class="user-container">
-    <ChatWindow :chatMessages="chatMessages" :userId="user.id"></ChatWindow>
-    <InputArea @addMessage="addMessage" @addAudioMessage="addAudioMessage"></InputArea>
+     <div v-if="loading" class="icon">
+        <div class="bar" style="background-color: #3498db; margin-left: -60px;"></div>
+        <div class="bar" style="background-color: #e74c3c; margin-left: -20px;"></div>
+        <div class="bar" style="background-color: #f1c40f; margin-left: 20px;"></div>
+        <div class="bar" style="background-color: #27ae60; margin-left: 60px;"></div>
+    </div>
+    <ChatWindow v-if="!loading" :chatMessages="chatMessages" :userId="user.id" :textLocaleOptions="textLocaleOptions" :audioLocaleOptions="audioLocaleOptions"></ChatWindow>
+    <InputArea v-if="!loading" @addMessage="addMessage" @addAudioMessage="addAudioMessage"></InputArea>
   </div>
 </template>
 
 <script>
+import GooglingualApi from "@/services/api/Googlingual";
 import socketio from 'socket.io-client';
 import ChatWindow from "./ChatWindow.vue";
 import InputArea from "./InputArea.vue";
@@ -44,15 +51,59 @@ export default {
   data: () => {
     return {
       socket: socketio(SOCKETS_API),
+      loading: true,
+      locales: [{ code: 'en', name: 'English' }],
+      voices: ['en-US'],
+      localesLoadTimer: null,
+      audiolocalesLoadTimer: null,
     };
   },
-  created() {
+  async created() {
     this.socket.on('connect', this.connect);
     this.socket.on('disconnect', this.disconnect);
     this.socket.on('userRegistered', this.userRegistered);
     this.socket.on('chatRoomMessage', this.chatRoomMessage);
+    await this.loadLocales();
+    this.loading = false;
+  },
+  computed: {
+    textLocaleOptions() {
+      const localesArr = this.locales.reduce((acc, curr) => {
+        acc = [ ...acc, ({ value: curr.code, text: curr.name }) ];
+        return acc;
+      }, []);
+      return localesArr;
+    },
+    audioLocaleOptions() {
+      const localesArr = this.voices.reduce((acc, curr) => {
+        acc = [ ...acc, ({ value: curr, text: curr }) ];
+        return acc;
+      }, []);
+      return localesArr;
+    },
   },
   methods: {
+    async loadLocales() {
+      this.localesLoadTimer = setInterval(async () => {
+        const localesResp = await GooglingualApi.locales();
+        if (localesResp.status == 200) {
+          this.locales = localesResp.data.results;
+          clearInterval(this.localesLoadTimer);
+          this.loadAudioLocales('en');
+          this.loading = false;
+        }
+      }, 3000);
+    },
+    async loadAudioLocales(lang) {
+      this.audiolocalesLoadTimer = setInterval(async () => {
+        const localesResp = await GooglingualApi.audioLocales(lang);
+        if (localesResp.status == 200) {
+          this.voices = localesResp.data.results;
+          clearInterval(this.audiolocalesLoadTimer);
+          this.loading = false;
+        }
+      }, 3000);
+    },
     connect() {
       console.log(`Connected to sockets server with id: ${this.socket.id}`);
       this.socket.emit('newSocketConnection', {
@@ -109,5 +160,71 @@ export default {
 .user-container {
   padding-left: 24px;
   padding-right: 24px;
+}
+
+/**
+body,div{
+    padding: 0;
+    box-sizing: border-box;
+}
+body{
+    /*light ocean */
+    /**
+    background-color: #eee;
+    font-family: 'Nunito', sans-serif;
+    text-align: center;
+}
+**/
+
+.icon{
+    position: relative;
+    /*left: 50vw;*/
+    margin: auto;
+    width: 0;
+    top: 50vh;
+    text-align: center;
+    cursor: pointer;
+}
+
+.bar{
+    position: absolute;
+    transform: translate(-50%,-50%);
+    /*align-items: center;*/
+    top : -10px;
+
+    background-color: #f98866;
+    width: 20px;
+    height: 20px;
+    margin: 5px 0;
+    border-radius: 10px;
+    transition: 0.3s;
+    animation: dope 1.5s ease-in-out 0s infinite;
+}
+
+.bar:nth-child(1){
+    animation-delay: 0s;
+}
+
+.bar:nth-child(2){
+    animation-delay: 0.15s;
+}
+.bar:nth-child(3){
+    animation-delay: 0.3s;
+}
+.bar:nth-child(4){
+    animation-delay: 0.45s;
+}
+
+
+@keyframes dope {
+    0%   {
+        height: 20px;
+    }
+    50%  {
+        height:60px;
+    }
+    100% {
+        height: 20px;
+    }
 }
 </style>
