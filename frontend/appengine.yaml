@@ -12,17 +12,17 @@
 # limitations under the License.
 
 # [START gae_quickstart_yaml]
-service: googlingual-frontend
+service: ui
 runtime: nodejs14
 
 handlers:
   # Serve all static files with urls ending with a file extension
-- url: /(.*\..+)$ 
+- url: /(.*\..+)$
   static_files: dist/\1
   upload: dist/(.*\..+)$
   # catch all handler to index.html
 - url: /.*
   static_files: dist/index.html
   upload: dist/index.html
-  
+
 # [END gae_quickstart_yaml]
