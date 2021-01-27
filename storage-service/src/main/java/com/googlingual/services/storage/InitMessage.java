@@ -6,6 +6,8 @@ import static com.googlingual.services.storage.util.SqlConstants.LAST_INDEX_QUER
 import com.google.cloud.functions.BackgroundFunction;
 import com.google.cloud.functions.Context;
 import com.google.cloud.pubsub.v1.Publisher;
+import com.google.cloud.secretmanager.v1.SecretManagerServiceClient;
+import com.google.cloud.secretmanager.v1.SecretVersionName;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
@@ -28,44 +30,70 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Logger;
 import javax.sql.DataSource;
 
+@SuppressWarnings("unused")
 public class InitMessage implements BackgroundFunction<PubSubMessage> {
 
   private static final Logger logger = Logger.getLogger(InitMessage.class.getName());
-  private static final String DB_NAME = "googlingual";
-  private static final String CLOUD_SQL_CONNECTION_NAME = "gcloud-dpe:us-central1:gsp-shabirmean";
-  private static final String DB_USER = "root";
-  private static final String DB_PASS = "7o0fafvczzmFl8Lg";
   private static final String LOCALE_EN = "en";
   private static final String AUDIO_EN_US = "en-US";
   private static final String MSG_INDEX_CLOUMN = "msg_index";
-  private static final String NEW_STORED_MESSAGE_TOPIC = "new-stored-message";
-  private static final String PROJECT_GCLOUD_DPE = "gcloud-dpe";
+
+  private static final String SECRET_VERSION = "latest";
+  private static final String PROJECT_GCLOUD_DPE = System.getenv("GCP_PROJECT");
+  private static final String PUBLISH_STORED_MSG_TOPIC = System.getenv("PUBLISH_STORED_MSG_TOPIC");
+  private static final String DB_USER_SECRET_KEY = System.getenv("DB_USER_SECRET_KEY");
+  private static final String DB_PASS_SECRET_KEY = System.getenv("DB_PASS_SECRET_KEY");
+  private static final String DB_NAME_SECRET_KEY = System.getenv("DB_NAME_SECRET_KEY");
+  private static final String DB_CONNECTION_SECRET_KEY = System.getenv("DB_CONNECTION_SECRET_KEY");
+  private static final String GOOGLE_MYSQL_CONNECTOR_FACTORY = "com.google.cloud.sql.mysql.SocketFactory";
+  private static final String PRIVATE_NET = "PRIVATE";
   private static final int DEFAULT_SQL_POOL_SIZE = 10;
-  private static DataSource pool = null;
   private static final Map<String, Publisher> publisherMap = new HashMap<>();
 
-  private static Publisher getPublisher(String topic) throws IOException {
-    Publisher publisher = publisherMap.get(topic);
+  private static String DB_USER;
+  private static String DB_PASS;
+  private static String DB_NAME;
+  private static String DB_CONNECTION_NAME;
+  private static DataSource pool = null;
+
+  private static Publisher getPublisher() throws IOException {
+    Publisher publisher = publisherMap.get(PUBLISH_STORED_MSG_TOPIC);
     if (publisher == null) {
-      publisher = Publisher.newBuilder(ProjectTopicName.of(PROJECT_GCLOUD_DPE, topic)).build();
-      publisherMap.put(topic, publisher);
+      publisher = Publisher.newBuilder(ProjectTopicName.of(PROJECT_GCLOUD_DPE, PUBLISH_STORED_MSG_TOPIC)).build();
+      publisherMap.put(PUBLISH_STORED_MSG_TOPIC, publisher);
     }
     return publisher;
   }
 
-  private static Connection getConnection() throws SQLException {
+  private Connection getConnection() throws SQLException {
     if (pool == null) {
+      loadDbCredentials();
       HikariConfig config = new HikariConfig();
       config.setJdbcUrl(String.format("jdbc:mysql:///%s", DB_NAME));
       config.setUsername(DB_USER);
       config.setPassword(DB_PASS);
-      config.addDataSourceProperty("socketFactory", "com.google.cloud.sql.mysql.SocketFactory");
-      config.addDataSourceProperty("cloudSqlInstance", CLOUD_SQL_CONNECTION_NAME);
-      config.addDataSourceProperty("ipTypes", "PRIVATE");
+      config.addDataSourceProperty("socketFactory", GOOGLE_MYSQL_CONNECTOR_FACTORY);
+      config.addDataSourceProperty("cloudSqlInstance", DB_CONNECTION_NAME);
+      config.addDataSourceProperty("ipTypes", PRIVATE_NET);
       config.setMaximumPoolSize(DEFAULT_SQL_POOL_SIZE);
       pool = new HikariDataSource(config);
     }
     return pool.getConnection();
+  }
+
+  private void loadDbCredentials() {
+    try (SecretManagerServiceClient client = SecretManagerServiceClient.create()) {
+      SecretVersionName dbUserSecret = SecretVersionName.of(PROJECT_GCLOUD_DPE, DB_USER_SECRET_KEY, SECRET_VERSION);
+      SecretVersionName dbPasswordSecret = SecretVersionName.of(PROJECT_GCLOUD_DPE, DB_PASS_SECRET_KEY, SECRET_VERSION);
+      SecretVersionName dbNameSecret = SecretVersionName.of(PROJECT_GCLOUD_DPE, DB_NAME_SECRET_KEY, SECRET_VERSION);
+      SecretVersionName dbConnectionSecret = SecretVersionName.of(PROJECT_GCLOUD_DPE, DB_CONNECTION_SECRET_KEY, SECRET_VERSION);
+      DB_USER = client.accessSecretVersion(dbUserSecret).getPayload().getData().toStringUtf8();
+      DB_PASS = client.accessSecretVersion(dbPasswordSecret).getPayload().getData().toStringUtf8();
+      DB_NAME = client.accessSecretVersion(dbNameSecret).getPayload().getData().toStringUtf8();
+      DB_CONNECTION_NAME = client.accessSecretVersion(dbConnectionSecret).getPayload().getData().toStringUtf8();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   @Override
@@ -140,7 +168,7 @@ public class InitMessage implements BackgroundFunction<PubSubMessage> {
     ByteString byteStr = ByteString.copyFrom(publishMessage, StandardCharsets.UTF_8);
     PubsubMessage pubsubApiMessage = PubsubMessage.newBuilder().setData(byteStr).build();
     try {
-      Publisher publisher = getPublisher(NEW_STORED_MESSAGE_TOPIC);
+      Publisher publisher = getPublisher();
       publisher.publish(pubsubApiMessage).get();
     } catch (IOException | InterruptedException | ExecutionException e) {
       e.printStackTrace();
@@ -148,7 +176,6 @@ public class InitMessage implements BackgroundFunction<PubSubMessage> {
   }
 
   public static class PubSubMessage {
-
     String data;
     Map<String, String> attributes;
     String messageId;

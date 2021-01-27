@@ -1,5 +1,12 @@
 steps:
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  args: ['gcloud', 'functions', 'deploy', 'text-to-text-service', '--entry-point', 'com.googlingual.services.t2t.TextToText', '--runtime', 'java11', '--trigger-topic', 'new-text-to-text-message']
+  args: ['gcloud', 'functions', 'deploy', 'text-to-text-service',
+  '--entry-point', 'com.googlingual.services.t2t.TextToText',
+  '--env-vars-file', '.env.yaml',
+  '--runtime', 'java11',
+  '--timeout', '60',
+  '--vpc-connector', 'projects/gcloud-dpe/locations/us-central1/connectors/googlingual-connector',
+  '--memory', '256MB',
+  '--trigger-topic', 'new-text-to-text-message']
   dir: 'text-to-text-service'
 timeout: "1600s"

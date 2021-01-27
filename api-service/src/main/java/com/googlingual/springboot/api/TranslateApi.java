@@ -36,8 +36,8 @@ import org.springframework.web.bind.annotation.RestController;
 @CrossOrigin(origins = "*")
 public class TranslateApi {
   private static final Logger logger = Logger.getLogger(TranslateApi.class.getName());
-  private static final String PROJECT_GCLOUD_DPE = "gcloud-dpe";
-  private static final String NEW_UNTRANSLATED_MESSAGE = "new-untranslated-message";
+  private static final String PROJECT_GCLOUD_DPE = System.getenv("GOOGLE_CLOUD_PROJECT");
+  private static final String PUBLISH_UNTRANSLATED_MSG_TOPIC = System.getenv("PUBLISH_UNTRANSLATED_MSG_TOPIC");
   private static final Gson GSON = new Gson();
   private static Publisher publisher;
 
@@ -94,7 +94,7 @@ public class TranslateApi {
   private static Publisher createPublisher(Author author) throws GooglingualApiException {
     try {
       if (publisher == null) {
-        publisher = Publisher.newBuilder(ProjectTopicName.of(PROJECT_GCLOUD_DPE, NEW_UNTRANSLATED_MESSAGE)).build();
+        publisher = Publisher.newBuilder(ProjectTopicName.of(PROJECT_GCLOUD_DPE, PUBLISH_UNTRANSLATED_MSG_TOPIC)).build();
       }
     } catch (IOException e) {
       String errMsg = String.format("Failed to create publisher to broadcast new message from [%s - %s]", author.getId(), author.getUsername());

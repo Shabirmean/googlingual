@@ -5,6 +5,8 @@ import static com.googlingual.services.translation.util.SqlConstants.GET_LOCALES
 import com.google.cloud.functions.BackgroundFunction;
 import com.google.cloud.functions.Context;
 import com.google.cloud.pubsub.v1.Publisher;
+import com.google.cloud.secretmanager.v1.SecretManagerServiceClient;
+import com.google.cloud.secretmanager.v1.SecretVersionName;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
@@ -28,17 +30,28 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Logger;
 import javax.sql.DataSource;
 
+@SuppressWarnings("unused")
 public class InitTranslation implements BackgroundFunction<PubSubMessage> {
 
   private static final Logger logger = Logger.getLogger(InitTranslation.class.getName());
-  private static final String DB_NAME = "googlingual";
-  private static final String CLOUD_SQL_CONNECTION_NAME = "gcloud-dpe:us-central1:gsp-shabirmean";
-  private static final String DB_USER = "root";
-  private static final String DB_PASS = "7o0fafvczzmFl8Lg";
+  private static final String SECRET_VERSION = "latest";
+  private static final String PROJECT_GCLOUD_DPE = System.getenv("GCP_PROJECT");
+  private static final String PUBLISH_SPEECH_TO_TEXT_MSG_TOPIC = System.getenv("PUBLISH_SPEECH_TO_TEXT_MSG_TOPIC");
+  private static final String PUBLISH_TEXT_TO_TEXT_MSG_TOPIC = System.getenv("PUBLISH_TEXT_TO_TEXT_MSG_TOPIC");
+  private static final String DB_USER_SECRET_KEY = System.getenv("DB_USER_SECRET_KEY");
+  private static final String DB_PASS_SECRET_KEY = System.getenv("DB_PASS_SECRET_KEY");
+  private static final String DB_NAME_SECRET_KEY = System.getenv("DB_NAME_SECRET_KEY");
+  private static final String DB_CONNECTION_SECRET_KEY = System.getenv("DB_CONNECTION_SECRET_KEY");
+  private static final String GOOGLE_MYSQL_CONNECTOR_FACTORY = "com.google.cloud.sql.mysql.SocketFactory";
+  private static final String PRIVATE_NET = "PRIVATE";
   private static final int DEFAULT_SQL_POOL_SIZE = 10;
-  private static final String PROJECT_GCLOUD_DPE = "gcloud-dpe";
-  private static DataSource pool = null;
   private static final Map<String, Publisher> publisherMap = new HashMap<>();
+
+  private static String DB_USER;
+  private static String DB_PASS;
+  private static String DB_NAME;
+  private static String DB_CONNECTION_NAME;
+  private static DataSource pool = null;
 
   private static Publisher getPublisher(String topic) throws IOException {
     Publisher publisher = publisherMap.get(topic);
@@ -49,16 +62,32 @@ public class InitTranslation implements BackgroundFunction<PubSubMessage> {
     return publisher;
   }
 
-  private static Connection getConnection(int poolSize) throws SQLException {
+  private void loadDbCredentials() {
+    try (SecretManagerServiceClient client = SecretManagerServiceClient.create()) {
+      SecretVersionName dbUserSecret = SecretVersionName.of(PROJECT_GCLOUD_DPE, DB_USER_SECRET_KEY, SECRET_VERSION);
+      SecretVersionName dbPasswordSecret = SecretVersionName.of(PROJECT_GCLOUD_DPE, DB_PASS_SECRET_KEY, SECRET_VERSION);
+      SecretVersionName dbNameSecret = SecretVersionName.of(PROJECT_GCLOUD_DPE, DB_NAME_SECRET_KEY, SECRET_VERSION);
+      SecretVersionName dbConnectionSecret = SecretVersionName.of(PROJECT_GCLOUD_DPE, DB_CONNECTION_SECRET_KEY, SECRET_VERSION);
+      DB_USER = client.accessSecretVersion(dbUserSecret).getPayload().getData().toStringUtf8();
+      DB_PASS = client.accessSecretVersion(dbPasswordSecret).getPayload().getData().toStringUtf8();
+      DB_NAME = client.accessSecretVersion(dbNameSecret).getPayload().getData().toStringUtf8();
+      DB_CONNECTION_NAME = client.accessSecretVersion(dbConnectionSecret).getPayload().getData().toStringUtf8();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
+  private Connection getConnection() throws SQLException {
     if (pool == null) {
+      loadDbCredentials();
       HikariConfig config = new HikariConfig();
       config.setJdbcUrl(String.format("jdbc:mysql:///%s", DB_NAME));
       config.setUsername(DB_USER);
       config.setPassword(DB_PASS);
-      config.addDataSourceProperty("socketFactory", "com.google.cloud.sql.mysql.SocketFactory");
-      config.addDataSourceProperty("cloudSqlInstance", CLOUD_SQL_CONNECTION_NAME);
-      config.addDataSourceProperty("ipTypes", "PRIVATE");
-      config.setMaximumPoolSize(poolSize);
+      config.addDataSourceProperty("socketFactory", GOOGLE_MYSQL_CONNECTOR_FACTORY);
+      config.addDataSourceProperty("cloudSqlInstance", DB_CONNECTION_NAME);
+      config.addDataSourceProperty("ipTypes", PRIVATE_NET);
+      config.setMaximumPoolSize(DEFAULT_SQL_POOL_SIZE);
       pool = new HikariDataSource(config);
     }
     return pool.getConnection();
@@ -79,7 +108,7 @@ public class InitTranslation implements BackgroundFunction<PubSubMessage> {
 
     Connection connection = null;
     try {
-      connection = getConnection(DEFAULT_SQL_POOL_SIZE);
+      connection = getConnection();
       connection.setAutoCommit(false);
       PreparedStatement getMessageLocaleStmt = connection.prepareStatement(GET_LOCALES_QUERY);
       getMessageLocaleStmt.setString(1, messageDao.getChatRoomId().toString());
@@ -133,7 +162,7 @@ public class InitTranslation implements BackgroundFunction<PubSubMessage> {
     ByteString byteStr = ByteString.copyFrom(publishMessage, StandardCharsets.UTF_8);
     PubsubMessage pubsubApiMessage = PubsubMessage.newBuilder().setData(byteStr).build();
     try {
-      Publisher publisher = getPublisher("new-speech-to-text-message");
+      Publisher publisher = getPublisher(PUBLISH_SPEECH_TO_TEXT_MSG_TOPIC);
       publisher.publish(pubsubApiMessage).get();
     } catch (IOException | InterruptedException | ExecutionException e) {
       e.printStackTrace();
@@ -145,7 +174,7 @@ public class InitTranslation implements BackgroundFunction<PubSubMessage> {
     ByteString byteStr = ByteString.copyFrom(publishMessage, StandardCharsets.UTF_8);
     PubsubMessage pubsubApiMessage = PubsubMessage.newBuilder().setData(byteStr).build();
     try {
-      Publisher publisher = getPublisher("new-text-to-text-message");
+      Publisher publisher = getPublisher(PUBLISH_TEXT_TO_TEXT_MSG_TOPIC);
       publisher.publish(pubsubApiMessage).get();
     } catch (IOException | InterruptedException | ExecutionException e) {
       e.printStackTrace();
