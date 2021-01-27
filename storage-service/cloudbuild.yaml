@@ -1,6 +1,6 @@
 steps:
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  args: ['gcloud', 'functions', 'deploy', 'storage-service',
+  args: ['gcloud', 'functions', 'deploy', 'stg-storage-service',
   '--entry-point', 'com.googlingual.services.storage.InitMessage',
   '--env-vars-file', '.env.yaml',
   '--runtime', 'java11',

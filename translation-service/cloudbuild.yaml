@@ -1,6 +1,6 @@
 steps:
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  args: ['gcloud', 'functions', 'deploy', 'translation-service',
+  args: ['gcloud', 'functions', 'deploy', 'stg-translation-service',
   '--entry-point', 'com.googlingual.services.translation.InitTranslation',
   '--env-vars-file', '.env.yaml',
   '--runtime', 'java11',
