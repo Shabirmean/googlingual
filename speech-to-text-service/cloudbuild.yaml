@@ -2,7 +2,7 @@ steps:
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   args: [
     'gcloud', 'functions', 'deploy', 'speech-to-text-service',
-    --entry-point', 'com.googlingual.services.s2t.SpeechToText',
+    '--entry-point', 'com.googlingual.services.s2t.SpeechToText',
     '--env-vars-file', '.env.yaml',
     '--runtime', 'java11',
     '--timeout', '180',
