@@ -15,8 +15,10 @@
 'use strict';
 
 const {PubSub} = require('@google-cloud/pubsub');
+const {SecretManagerServiceClient} = require('@google-cloud/secret-manager');
 const mysql = require('promise-mysql');
 const express = require('express');
+const cors = require('cors');
 const path = require('path');
 const app = express();
 const server = require('http').Server(app);
@@ -30,13 +32,45 @@ let socketsMap = {};          // socketId to sockets
 let socketIdToUserMap = {};   // sockerId to userId
 let userToSocketIdsMap = {};  // userId socketIdList
 let userInfoMap = {};         // holds user preferences
-const textMessageSubscription = 'projects/gcloud-dpe/subscriptions/socket-service-subscription';
-const audioMessageSubscription = 'projects/gcloud-dpe/subscriptions/socket-service-subscription-for-audio';
+
+const GCLOUD_PROJECT = process.env.GOOGLE_CLOUD_PROJECT;
+const textMessageSubscription = `projects/${GCLOUD_PROJECT}/${process.env.TEXT_MESSAGE_SUBSCRIPTION}`;
+const audioMessageSubscription = `projects/${GCLOUD_PROJECT}/${process.env.AUDIO_MESSAGE_SUBSCRIPTION}`;
 const pubSubClientForText = new PubSub();
 const pubSubClientForAudio = new PubSub();
 
-app.set('view engine', 'pug');
+const dbUserSecretKey = `projects/${GCLOUD_PROJECT}/${process.env.DB_USER_SECRET}`;
+const dbPasswordSecretKey = `projects/${GCLOUD_PROJECT}/${process.env.DB_PASSWORD_SECRET}`;
+const dbNameSecretKey = `projects/${GCLOUD_PROJECT}/${process.env.DB_NAME_SECRET}`;
+const dbHostSecretKey = `projects/${GCLOUD_PROJECT}/${process.env.DB_HOST_SECRET}`;
+const client = new SecretManagerServiceClient();
+
+let dbUser;
+let dbPassword;
+let dbServer;
+let hostIp;
+let hostPort;
+
+async function loadDbAccessCredentials() {
+  const [user] = await client.accessSecretVersion({ name: dbUserSecretKey });
+  const [password] = await client.accessSecretVersion({ name: dbPasswordSecretKey });
+  const [database] = await client.accessSecretVersion({ name: dbNameSecretKey });
+  const [hostAndPort] = await client.accessSecretVersion({ name: dbHostSecretKey });
+
+  dbUser = user.payload.data.toString();
+  dbPassword = password.payload.data.toString();
+  dbServer = database.payload.data.toString();
+
+  const hostPortPair = hostAndPort.payload.data.toString().split(':');
+  hostIp = hostPortPair[0];
+  hostPort = hostPortPair[1];
+}
+
+app.use(cors({
+  origin: 'https://www.googlingual.com'
+}));
 app.use("/assets", express.static(path.join(__dirname, 'assets')));
+app.set('view engine', 'pug');
 app.get('/', (req, res) => {
   res.render('index.pug');
 });
@@ -97,11 +131,11 @@ function cleanUpSocketReferences(socket) {
 
 const createPool = async () => {
   return await mysql.createPool({
-    user: 'root',                                   // process.env.DB_USER, // e.g. 'my-db-user'
-    password: '7o0fafvczzmFl8Lg',                   //process.env.DB_PASS, // e.g. 'my-db-password'
-    database: 'googlingual',                        // process.env.DB_NAME, // e.g. 'my-database'
-    host: '10.114.49.3',                            // dbSocketAddr[0], // e.g. '34.71.243.72'
-    port: '3306',                                   // e.g. '3306'
+    user: dbUser,
+    password: dbPassword,
+    database: dbServer,
+    host: hostIp,
+    port: hostPort,
     connectionLimit: 5,
     connectTimeout: 10000,                          // 10 seconds
     acquireTimeout: 10000,                          // 10 seconds
@@ -147,6 +181,7 @@ async function fetchConnectedUsers(chatRoom) {
 async function handlePubSubMessage(message) {
   const payload = JSON.parse(message.data);
   console.log(`Received message ${message.id} with attributes: `, message.attributes);
+  message.ack();
   // console.log(payload);
 
   const chatMessage = payload.message;
@@ -170,7 +205,6 @@ async function handlePubSubMessage(message) {
       });
     }
   });
-  message.ack();
 }
 
 function listenForMessages(socketsMap) {
@@ -183,6 +217,7 @@ function listenForMessages(socketsMap) {
 
 if (module === require.main) {
   console.log("Starting node app....");
+  loadDbAccessCredentials();
   listenForMessages(socketsMap);
 
   const PORT = process.env.PORT || 8081;
