@@ -66,9 +66,20 @@ async function loadDbAccessCredentials() {
   hostPort = hostPortPair[1];
 }
 
+const allowedOrigins = ['https://www.googlingual.com', 'https://www.staging.googlingual.com'];
 app.use(cors({
-  origin: 'https://www.googlingual.com'
+  origin: function(origin, callback){
+    if(!origin) return callback(null, true);
+    if(allowedOrigins.indexOf(origin) === -1){
+      var msg = 'The CORS policy for this site does not ' +
+                'allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  }
 }));
+
+
 app.use("/assets", express.static(path.join(__dirname, 'assets')));
 app.set('view engine', 'pug');
 app.get('/', (req, res) => {
