@@ -10,8 +10,8 @@ network:
   session_affinity: true
 
 env_variables:
-  TEXT_MESSAGE_SUBSCRIPTION: 'subscriptions/socket-service-subscription'
-  AUDIO_MESSAGE_SUBSCRIPTION: 'subscriptions/socket-service-subscription-for-audio'
+  TEXT_MESSAGE_SUBSCRIPTION: 'subscriptions/stg-socket-service-subscription'
+  AUDIO_MESSAGE_SUBSCRIPTION: 'subscriptions/stg-socket-service-subscription-for-audio'
   DB_USER_SECRET: 'secrets/sql-db-user/versions/latest'
   DB_PASSWORD_SECRET: 'secrets/googlingual-db-dev-pw/versions/latest'
   DB_NAME_SECRET: 'secrets/sql-db-name/versions/latest'

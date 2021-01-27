@@ -20,4 +20,4 @@ resources:
   memory_gb: 2.3
 
 env_variables:
-  PUBLISH_UNTRANSLATED_MSG_TOPIC: "new-untranslated-message"
+  PUBLISH_UNTRANSLATED_MSG_TOPIC: "stg-new-untranslated-message"

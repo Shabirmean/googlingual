@@ -7,6 +7,6 @@ steps:
   '--timeout', '60',
   '--vpc-connector', 'projects/gcloud-dpe/locations/us-central1/connectors/googlingual-connector',
   '--memory', '256MB',
-  '--trigger-topic', 'new-untranslated-message']
+  '--trigger-topic', 'stg-new-untranslated-message']
   dir: 'storage-service'
 timeout: "1600s"

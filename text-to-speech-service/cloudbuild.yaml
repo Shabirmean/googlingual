@@ -7,6 +7,6 @@ steps:
   '--timeout', '300',
   '--vpc-connector', 'projects/gcloud-dpe/locations/us-central1/connectors/googlingual-connector',
   '--memory', '512MB',
-  '--trigger-topic', 'new-text-to-speech-message']
+  '--trigger-topic', 'stg-new-text-to-speech-message']
   dir: 'text-to-speech-service'
 timeout: "1600s"
