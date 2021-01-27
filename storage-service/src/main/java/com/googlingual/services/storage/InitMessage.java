@@ -39,7 +39,7 @@ public class InitMessage implements BackgroundFunction<PubSubMessage> {
   private static final String MSG_INDEX_CLOUMN = "msg_index";
 
   private static final String SECRET_VERSION = "latest";
-  private static final String PROJECT_GCLOUD_DPE = System.getenv("GCP_PROJECT");
+  private static final String PROJECT_GCLOUD_DPE = System.getenv("GOOGLE_CLOUD_PROJECT");
   private static final String PUBLISH_STORED_MSG_TOPIC = System.getenv("PUBLISH_STORED_MSG_TOPIC");
   private static final String DB_USER_SECRET_KEY = System.getenv("DB_USER_SECRET_KEY");
   private static final String DB_PASS_SECRET_KEY = System.getenv("DB_PASS_SECRET_KEY");
