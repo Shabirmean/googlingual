@@ -83,6 +83,7 @@ public class InitMessage implements BackgroundFunction<PubSubMessage> {
 
   private void loadDbCredentials() {
     try (SecretManagerServiceClient client = SecretManagerServiceClient.create()) {
+      logger.info(String.format("LoadCreds: Project [%s] User key [%s] - Version [%s]", PROJECT_GCLOUD_DPE, DB_USER_SECRET_KEY, SECRET_VERSION));
       SecretVersionName dbUserSecret = SecretVersionName.of(PROJECT_GCLOUD_DPE, DB_USER_SECRET_KEY, SECRET_VERSION);
       SecretVersionName dbPasswordSecret = SecretVersionName.of(PROJECT_GCLOUD_DPE, DB_PASS_SECRET_KEY, SECRET_VERSION);
       SecretVersionName dbNameSecret = SecretVersionName.of(PROJECT_GCLOUD_DPE, DB_NAME_SECRET_KEY, SECRET_VERSION);
