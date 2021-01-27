@@ -50,7 +50,7 @@ let dbServer;
 let hostIp;
 let hostPort;
 
-function loadDbAccessCredentials() {
+async function loadDbAccessCredentials() {
   const [user] = await client.accessSecretVersion({ name: dbUserSecretKey });
   const [password] = await client.accessSecretVersion({ name: dbPasswordSecretKey });
   const [database] = await client.accessSecretVersion({ name: dbNameSecretKey });
