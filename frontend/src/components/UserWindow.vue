@@ -123,7 +123,7 @@ export default {
       this.fetchingVoices = true;
       const localesResp = await GooglingualApi.audioLocales(lang);
       this.voicesGiveupCount += 1;
-      if (localesResp.status === 200) {
+      if (localesResp && localesResp.status === 200) {
         this.voices = this.hasElements(localesResp.data.results) ? localesResp.data.results : [ 'None' ];
       } else if (this.voicesGiveupCount < 10) {
         setTimeout(this.loadAudioLocales, 7500);
