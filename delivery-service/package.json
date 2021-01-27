@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@google-cloud/pubsub": "^2.8.0",
+    "@google-cloud/secret-manager": "^3.4.0",
     "cors": "^2.8.5",
     "express": "^4.15.4",
     "promise-mysql": "^5.0.0",
