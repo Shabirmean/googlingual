@@ -10,7 +10,6 @@ network:
   session_affinity: true
 
 env_variables:
-
   TEXT_MESSAGE_SUBSCRIPTION: 'subscriptions/socket-service-subscription'
   AUDIO_MESSAGE_SUBSCRIPTION: 'subscriptions/socket-service-subscription-for-audio'
   DB_USER_SECRET: 'secrets/sql-db-user/versions/latest'

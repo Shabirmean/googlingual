@@ -18,6 +18,7 @@ const {PubSub} = require('@google-cloud/pubsub');
 const {SecretManagerServiceClient} = require('@google-cloud/secret-manager');
 const mysql = require('promise-mysql');
 const express = require('express');
+const cors = require('cors');
 const path = require('path');
 const app = express();
 const server = require('http').Server(app);
@@ -65,8 +66,11 @@ async function loadDbAccessCredentials() {
   hostPort = hostPortPair[1];
 }
 
-app.set('view engine', 'pug');
+app.use(cors({
+  origin: 'https://www.googlingual.com'
+}));
 app.use("/assets", express.static(path.join(__dirname, 'assets')));
+app.set('view engine', 'pug');
 app.get('/', (req, res) => {
   res.render('index.pug');
 });
