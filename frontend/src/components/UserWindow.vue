@@ -123,7 +123,7 @@ export default {
       if (localesResp && localesResp.status === 200) {
         this.voices = this.hasElements(localesResp.data.results) ? localesResp.data.results : [ 'None' ];
       } else if (this.voicesGiveupCount < 10) {
-        setTimeout(this.loadAudioLocales, 7500);
+        setTimeout(this.loadAudioLocales.bind(null, lang), 7500);
       }
       this.fetchingVoices = false;
     },
