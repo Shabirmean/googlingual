@@ -14,7 +14,7 @@ node_modules
 node_modules
 dist/
 npm.logs
-
+.appengine.env
 
 
 # local env files

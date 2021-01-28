@@ -1,23 +1,17 @@
 <template>
   <div class="message-container">
-    <p
-      class="message"
-      :class="{ 'message-out': !isAuthor, 'message-in': isAuthor }"
-    >
-      <img
-        v-if="isAuthor"
-        class="image-chart image-left"
-        :src="require(`@/assets/${avatar}`)"
+    <div  class="message" :class="{ 'message-out': !isAuthor, 'message-in': isAuthor }">
+    <img
+        class="image-chart"
+        :class="{ 'image-left': !isAuthor, 'image-right': isAuthor }"
+        :src="displayImage"
         :alt="author"
       />
-      {{ displayMessage }}
-      <img
-        v-if="!isAuthor"
-        class="image-chart image-right"
-        :src="require(`@/assets/${avatar}`)"
-        :alt="author"
-      />
-    </p>
+      <div>
+        <div class="message-content"> {{ displayMessage }} </div>
+        <div :class="{ 'author-left': isAuthor, 'author-right': !isAuthor }"> {{ author }} </div>
+      </div>
+    </div>
     <audio v-if="isAudio" controls :class="{ 'audio-out': !isAuthor }">
       <source :src="message.audioMessage"/>
       Your browser does not support the audio element.
@@ -50,6 +44,9 @@ export default {
     displayMessage() {
       return this.isAuthor ? this.message.textOriginal : this.message.textMessage;
     },
+    displayImage() {
+      return this.avatar.includes('http') ? this.avatar : require(`@/assets/${this.avatar}`);
+    },
     isAuthor() {
       return this.sent;
     },
@@ -65,6 +62,11 @@ p {
   margin-top: 1em;
 }
 
+img {
+  max-width: 50px;
+  max-height: 47px;
+}
+
 .message-container {
   display: flex;
   flex-direction: column;
@@ -78,12 +80,15 @@ p {
   text-align: left;
   background: #eaeaff;
   font-weight: bold;
+  display: flex;
+  margin-bottom: 5px;
 }
 .message-out {
   background: #f7386aa1;
   color: black;
   margin-left: 55%;
   text-align: right;
+  flex-flow: row-reverse;
 }
 .message-in {
   background: #27922bfa;
@@ -101,9 +106,24 @@ p {
 }
 
 .image-left {
-  margin-right: 12px;
+  margin-right: 5px;
+  margin-left: 12px;
 }
 .image-right {
-  margin-left: 12px;
+  margin-left: 5px;
+  margin-right: 12px;
+}
+.message-content {
+  margin-top: 5px;
+}
+.author-left {
+  margin-top: 2px;
+  font-style: italic;
+  color: #ffffff82;
+}
+.author-right {
+  margin-top: 2px;
+  font-style: italic;
+  color: #00000082;
 }
 </style>

@@ -52,10 +52,6 @@ export default {
       type: Object,
       required: true,
     },
-    avatar: {
-      type: String,
-      required: true,
-    },
     defaultLocale: {
       type: String,
       default: 'en',

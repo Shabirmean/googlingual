@@ -1,16 +1,21 @@
 import axios from 'axios'
+import store from '@/main'
 
 const API_SERVER_URL = (process.env.VUE_APP_API_SERVER_URL) ?
   process.env.VUE_APP_API_SERVER_URL : 'http://localhost:8082';
+const HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Content-Type': 'application/json'
+};
 
 export default {
   async send(message) {
     return axios.post(`${API_SERVER_URL}/send`, message, {
       headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Content-Type': 'application/json'
+        ...HEADERS,
+        'Authorization': `Bearer ${store.getters.accessToken}`,
       }
     }).catch((error) => {
       if (!error.response) {
@@ -19,12 +24,11 @@ export default {
     });
   },
   async locales() {
+    console.log(store.getters.accessToken);
     return axios.get(`${API_SERVER_URL}/locales`, {
       headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Content-Type': 'application/json'
+        ...HEADERS,
+        'Authorization': `Bearer ${store.getters.accessToken}`,
       }
     }).catch((error) => {
       if (!error.response) {
@@ -35,10 +39,8 @@ export default {
   async audioLocales(lang) {
     return axios.get(`${API_SERVER_URL}/audioLocales/${lang}`, {
       headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Content-Type': 'application/json'
+        ...HEADERS,
+        'Authorization': `Bearer ${store.getters.accessToken}`,
       }
     }).catch((error) => {
       if (!error.response) {

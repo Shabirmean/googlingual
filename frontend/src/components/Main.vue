@@ -4,7 +4,6 @@
       :windowTheme="'left-container'"
       :chatMessages="chatMessagesForShabirmean"
       :user="shabirmean"
-      :avatar="shabirmean.avatar"
       roomId="cb3bf2c8-56dd-11eb-8833-42010a723002"
       @sendMessage="sendMessage"
       @sendAudioMessage="sendAudioMessage"
@@ -14,7 +13,6 @@
       :windowTheme="'right-container'"
       :chatMessages="chatMessagesForMom"
       :user="kairunnisa"
-      :avatar="kairunnisa.avatar"
       roomId="cb3bf2c8-56dd-11eb-8833-42010a723002"
       defaultLocale="ta"
       @sendMessage="sendMessage"
@@ -64,6 +62,12 @@ export default {
   components: {
     UserWindow,
   },
+  props: {
+    user: {
+      type: Object,
+      required: true,
+    }
+  },
   data: () => {
     return {
       shabirmean: {
@@ -86,15 +90,43 @@ export default {
         shabirmean: DUMMY_MSGS,
         kairunnisa: DUMMY_MSGS
       },
+      pingCounter: 0,
+      pingChron: null,
     };
   },
   computed: {
     chatMessagesForShabirmean() {
-      return Object.values(this.perUserMessages.shabirmean).sort((a, b) => a.id < b.id);
+      return Object.values(this.perUserMessages.shabirmean)
+        .map((m) => {
+          m.author.avatar = this.user.photoURL;
+          return m;
+        })
+        .sort((a, b) => a.id < b.id);
     },
     chatMessagesForMom() {
       return Object.values(this.perUserMessages.kairunnisa).sort((a, b) => a.id < b.id);
     },
+  },
+  async created() {
+    // this.pingChron = setInterval(() => {
+    //   if (this.pingCounter === 1000) {
+    //     console.log('Clearing ping chron...');
+    //     clearInterval(this.pingChron);
+    //     return;
+    //   }
+    //   this.pingCounter += 1;
+    //   GooglingualApi.send({
+    //     roomId: 'cb3bf539-56dd-11eb-8833-42010a723002',
+    //     author: {
+    //       id: 'bd63bae8-5744-11eb-8833-42010a723002',
+    //       username: 'afifa',
+    //     },
+    //     text: {
+    //       message: 'Ping',
+    //       locale: 'en',
+    //     },
+    //   });
+    // }, 3000);
   },
   methods: {
     getUser(uId) {
