@@ -38,6 +38,7 @@ public class TextToText implements BackgroundFunction<PubSubMessage> {
   private static final String SECRET_VERSION = "latest";
   private static final String PROJECT_GCLOUD_DPE = System.getenv("GCP_PROJECT");
   private static final String PUBLISH_TEXT_TO_SPEECH_MSG_TOPIC = System.getenv("PUBLISH_TEXT_TO_SPEECH_MSG_TOPIC");
+  private static final String PUBLISH_TEXT_TRANSLATED_MSG_TOPIC = System.getenv("PUBLISH_TRANSLATED_MSG_TOPIC");
   private static final String DB_USER_SECRET_KEY = System.getenv("DB_USER_SECRET_KEY");
   private static final String DB_PASS_SECRET_KEY = System.getenv("DB_PASS_SECRET_KEY");
   private static final String DB_NAME_SECRET_KEY = System.getenv("DB_NAME_SECRET_KEY");
@@ -53,11 +54,11 @@ public class TextToText implements BackgroundFunction<PubSubMessage> {
   private static String DB_CONNECTION_NAME;
   private static DataSource pool = null;
 
-  private static Publisher getPublisher() throws IOException {
-    Publisher publisher = publisherMap.get(PUBLISH_TEXT_TO_SPEECH_MSG_TOPIC);
+  private static Publisher getPublisher(String topic) throws IOException {
+    Publisher publisher = publisherMap.get(topic);
     if (publisher == null) {
-      publisher = Publisher.newBuilder(ProjectTopicName.of(PROJECT_GCLOUD_DPE, PUBLISH_TEXT_TO_SPEECH_MSG_TOPIC)).build();
-      publisherMap.put(PUBLISH_TEXT_TO_SPEECH_MSG_TOPIC, publisher);
+      publisher = Publisher.newBuilder(ProjectTopicName.of(PROJECT_GCLOUD_DPE, topic)).build();
+      publisherMap.put(topic, publisher);
     }
     return publisher;
   }
@@ -146,6 +147,7 @@ public class TextToText implements BackgroundFunction<PubSubMessage> {
       connection.commit();
       insertMessageStmt.close();
       logger.info(String.format("Inserted translated text message [id: %s]", updatedDao.getId()));
+      publishTranslatedMessage(new PubSubExchangeMessage(updatedDao, destinationLocale));
       for (String audioLocale: exchangeMessage.getAudioDestinationLocales()) {
         forwardToTextToSpeechService(updatedDao, audioLocale);
         logger.info(String.format("Published T2S translation request for audio lang [%s]", audioLocale));
@@ -176,8 +178,22 @@ public class TextToText implements BackgroundFunction<PubSubMessage> {
     ByteString byteStr = ByteString.copyFrom(publishMessage, StandardCharsets.UTF_8);
     PubsubMessage pubsubApiMessage = PubsubMessage.newBuilder().setData(byteStr).build();
     try {
-      Publisher publisher = getPublisher();
+      Publisher publisher = getPublisher(PUBLISH_TEXT_TO_SPEECH_MSG_TOPIC);
       publisher.publish(pubsubApiMessage).get();
+    } catch (IOException | InterruptedException | ExecutionException e) {
+      e.printStackTrace();
+    }
+  }
+
+  private void publishTranslatedMessage(PubSubExchangeMessage exchangeMessage) {
+    String publishMessage = exchangeMessage.getJsonString();
+    ByteString byteStr = ByteString.copyFrom(publishMessage, StandardCharsets.UTF_8);
+    PubsubMessage pubsubApiMessage = PubsubMessage.newBuilder().setData(byteStr).build();
+    try {
+      Publisher publisher = getPublisher(PUBLISH_TEXT_TRANSLATED_MSG_TOPIC);
+      publisher.publish(pubsubApiMessage).get();
+      logger.info(String.format("Published translated TEXT message [%s]",
+          exchangeMessage.getMessage().getMessage()));
     } catch (IOException | InterruptedException | ExecutionException e) {
       e.printStackTrace();
     }

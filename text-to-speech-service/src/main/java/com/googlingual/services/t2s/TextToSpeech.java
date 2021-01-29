@@ -175,6 +175,8 @@ public class TextToSpeech implements BackgroundFunction<PubSubMessage> {
     try {
       Publisher publisher = getPublisher();
       publisher.publish(pubsubApiMessage).get();
+      logger.info(String.format("Published fully translated VOICE message for text [%s]",
+          exchangeMessage.getMessage().getMessage()));
     } catch (IOException | InterruptedException | ExecutionException e) {
       e.printStackTrace();
     }
