@@ -14,6 +14,7 @@
 
 'use strict';
 
+require('@google-cloud/debug-agent').start({ serviceContext: { enableCanary: false } });
 const {PubSub} = require('@google-cloud/pubsub');
 const {SecretManagerServiceClient} = require('@google-cloud/secret-manager');
 const mysql = require('promise-mysql');
@@ -165,17 +166,17 @@ async function getUsers(chatRoom) {
 
 const INSERT_USER_SQL = `INSERT INTO roomusers_v2
    (id, chatroom_id, message_locale, audio_locale, user_id, name, socket_id)
-   VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), ?, ?, ?, ?, ?)`;
+   VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), ?, ?, ?, ?, ?);`;
 
 const UPDATE_USER_SQL = `UPDATE roomusers_v2
    SET message_locale = ?, audio_locale = ?, socket_id = ?, disconnected = 0
    WHERE chatroom_id = UUID_TO_BIN(?)
-   AND user_id = ?`;
+   AND user_id = ?;`;
 
 const DISCONNECT_USER_SQL = `UPDATE roomusers_v2
    SET disconnected = 1
    WHERE socket_id = ?
-   AND user_id = ?`;
+   AND user_id = ?;`;
 
 async function registerNewUser(data, updateOnly = false) {
   dbPool = dbPool || (await createPoolAndEnsureSchema());
@@ -226,9 +227,12 @@ async function fetchConnectedUsers(chatRoom) {
     const stmt = `SELECT
        user_id,
        message_locale,
-       audio_locale
+       audio_locale,
+       socket_id,
+       name
       FROM roomusers_v2
-      WHERE chatroom_id = UUID_TO_BIN(?);`;
+      WHERE chatroom_id = UUID_TO_BIN(?)
+      AND disconnected = 0;`;
     const roomUsersQuery = dbPool.query(stmt, [chatRoom]);
     return await roomUsersQuery;
   } catch (err) {
@@ -241,30 +245,37 @@ async function handlePubSubMessage(message) {
   const payload = JSON.parse(message.data);
   console.log(`Received message ${message.id} with attributes: `, message.attributes);
   message.ack();
+  console.log(payload);
 
   const chatMessage = payload.message;
   const chatRoom = chatMessage.chatRoomId;
   const roomUsers = await getUsers(chatRoom);
   roomUsers.forEach(user => {
     const uId = user.user_id;
-    const socketIdList = userToSocketIdsMap[uId];
-    if (!socketIdList || !userInfoMap[uId]) {
-      return;
-    }
+    const socketId = user.socket_id;
+    //const socketIdList = userToSocketIdsMap[uId];
+    // if (!socketIdList || !userInfoMap[uId]) {
+    //   return;
+    // }
 
     const isAudio = !!chatMessage.audioMessage;
     if ((isAudio && userInfoMap[uId].audioLocale === chatMessage.audioLocale) ||
         (!isAudio && userInfoMap[uId].textLocale === chatMessage.messageLocale)) {
-      socketIdList.forEach(sockId => {
-        if (socketsMap[sockId]) {
-          socketsMap[sockId].emit('chatRoomMessage', chatMessage);
-        }
-      });
+      // socketIdList.forEach(socketId => {
+      if (socketsMap[socketId]) {
+        console.log(`<SUCCESS> Publishing message for user [${uId}] pver socket [${socketId}]`);
+        socketsMap[socketId].emit('chatRoomMessage', chatMessage);
+      } else {
+        console.log(`<WARN> Socket not found for user [${uId}] with socket id [${socketId}]`);
+      }
+      // });
+    } else {
+      console.log(`<WARN> Delivery criteria not met for [${uId}] with socket id [${socketId}]`);
     }
   });
 }
 
-function listenForMessages(socketsMap) {
+function listenForMessages() {
   console.log("Registering subscriber....");
   const textSubscription = pubSubClientForText.subscription(textMessageSubscription);
   const audioSubscription = pubSubClientForAudio.subscription(audioMessageSubscription);
@@ -275,7 +286,7 @@ function listenForMessages(socketsMap) {
 if (module === require.main) {
   console.log("Starting node app....");
   loadDbAccessCredentials();
-  listenForMessages(socketsMap);
+  listenForMessages();
 
   const PORT = process.env.PORT || 8081;
   server.listen(PORT, () => {

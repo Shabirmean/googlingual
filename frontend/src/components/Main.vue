@@ -47,7 +47,7 @@ const DUMMY_MSGS = {
   "2": {
     id: 2,
     author: {
-      id: '547996d3-56dd-11eb-8833-42010a723002',
+      id: '55YgRqTtsIWi2ApBnjofClqZXMWg',
       username: 'kairunnisa',
       avatar: "avatar-female.png",
     },
