@@ -20,3 +20,4 @@ resources:
 
 env_variables:
   PUBLISH_UNTRANSLATED_MSG_TOPIC: "new-untranslated-message"
+  OAUTH_CLIENT_ID_SECRET_KEY: 'oauth-client-id'

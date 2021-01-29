@@ -16,4 +16,3 @@ env_variables:
   DB_PASSWORD_SECRET: 'secrets/googlingual-db-dev-pw/versions/latest'
   DB_NAME_SECRET: 'secrets/sql-db-name/versions/latest'
   DB_HOST_SECRET: 'secrets/sql-private-host/versions/latest'
-  OAUTH_CLIENT_ID_SECRET_KEY: 'oauth-client-id'
