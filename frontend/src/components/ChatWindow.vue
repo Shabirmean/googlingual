@@ -101,7 +101,6 @@ export default {
   watch: {
     textLocaleOptions(newV, oldV) {
       const previouslySelected = this.selectedTextLocale;
-      console.log(previouslySelected, this.selectedTextLocale);
       if (!oldV) {
         this.selectedTextLocale = newV[0].value;
       } else {

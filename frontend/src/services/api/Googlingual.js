@@ -11,14 +11,11 @@ const HEADERS = {
 };
 
 export default {
-  async send(message, isPing = false) {
+  async send(message) {
     const requestHeaders = {
       ...HEADERS,
       'Authorization': `Bearer ${store.getters.accessToken}`,
     };
-    if (isPing) {
-      requestHeaders['ping'] = 'keep-alive';
-    }
     return axios.post(`${API_SERVER_URL}/send`, message, { headers: requestHeaders })
       .catch((error) => {
         if (!error.response) {
@@ -27,7 +24,6 @@ export default {
       });
   },
   async locales() {
-    console.log(store.getters.accessToken);
     return axios.get(`${API_SERVER_URL}/locales`, {
       headers: {
         ...HEADERS,

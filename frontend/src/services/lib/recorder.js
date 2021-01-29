@@ -52,8 +52,6 @@ export default class {
       }
     });
     this.encoderOptions.sampleRate = selectedDevice.label.includes('Bluetooth') ? 16000 : 44100;
-    // console.log(`Selected device:\n\tKind: ${selectedDevice.kind}\n\tLabel: ${selectedDevice.label}`);
-
     this.isPause     = false
     this.isRecording = true
 

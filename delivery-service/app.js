@@ -182,7 +182,6 @@ async function handlePubSubMessage(message) {
   const payload = JSON.parse(message.data);
   console.log(`Received message ${message.id} with attributes: `, message.attributes);
   message.ack();
-  // console.log(payload);
 
   const chatMessage = payload.message;
   const chatRoom = chatMessage.chatRoomId;
@@ -199,7 +198,6 @@ async function handlePubSubMessage(message) {
         (!isAudio && userInfoMap[uId].textLocale === chatMessage.messageLocale)) {
       socketIdList.forEach(sockId => {
         if (socketsMap[sockId]) {
-          // console.log(`Socket found for userId: ${uId} --> ${sockId}`);
           socketsMap[sockId].emit('chatRoomMessage', chatMessage);
         }
       });

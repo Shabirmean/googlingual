@@ -86,7 +86,6 @@ export default {
         async (user) => {
           if (user) {
             const token = await user.getIdToken();
-            console.log({ ...user });
             if (!token) {
               appContext.signedIn = false;
               return;
@@ -98,7 +97,6 @@ export default {
               photoURL: user.photoURL,
               accessToken: token,
             });
-            console.log(appContext.$store.state.user);
             appContext.signedIn = true;
           } else {
             appContext.signedIn = false;
