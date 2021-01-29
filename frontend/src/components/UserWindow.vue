@@ -100,16 +100,14 @@ export default {
     },
     async loadLocales() {
       const localesResp = await GooglingualApi.locales();
-      console.log(localesResp);
       this.localesGiveupCount += 1;
       if (localesResp && localesResp.status === 200) {
         this.locales = this.hasElements(localesResp.data.results) ? localesResp.data.results : [ { code: 'en', name: 'English' } ];
         this.loading = false;
         return;
       }
-      if (this.localesGiveupCount >= 10) {
+      if (this.localesGiveupCount >= 5) {
         this.$emit('signOut');
-        // this.loading = false;
         return;
       }
       setTimeout(this.loadLocales, 7500);

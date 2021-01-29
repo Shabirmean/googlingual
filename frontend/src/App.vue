@@ -86,6 +86,7 @@ export default {
         async (user) => {
           if (user) {
             const token = await user.getIdToken();
+            console.log({ ...user });
             if (!token) {
               appContext.signedIn = false;
               return;
@@ -111,7 +112,9 @@ export default {
         });
     },
     async signOut(event) {
-      event.preventDefault();
+      if (event) {
+        event.preventDefault();
+      }
       await firebase.auth().signOut();
       clearInterval(this.$refs.main.pingChron);
       window.location.reload();

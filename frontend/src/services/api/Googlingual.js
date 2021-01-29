@@ -34,8 +34,6 @@ export default {
         'Authorization': `Bearer ${store.getters.accessToken}`,
       }
     }).catch((error) => {
-      console.log({ ...error })
-      console.log(error.response)
       if (!error.response) {
         return { status: 500 };
       }
