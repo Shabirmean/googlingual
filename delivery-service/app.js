@@ -78,7 +78,7 @@ app.get('/', (req, res) => {
 io.on('connection', socket => {
   socketsMap[socket.id] = socket;
   socket.on('newSocketConnection', data => {
-    console.log(data);
+    registerNewUser(data);
     const socketId = data.sId;
     const userId = data.uId;
     if (!socketsMap[socketId]) {
@@ -103,6 +103,7 @@ io.on('connection', socket => {
 });
 
 function updateUserInfomation(data) {
+  registerNewUser(data, true);
   const userId = data.uId;
   userInfoMap[userId] = {
     textLocale: data.textLocale,
@@ -112,12 +113,13 @@ function updateUserInfomation(data) {
 
 function cleanUpSocketReferences(socket) {
   const userId = socketIdToUserMap[socket.id];
+  unregisterUser(userId, socket.id);
   const socketList = userToSocketIdsMap[userId] || [];
   const socketIndex = socketList.indexOf(socket.id);
   if (socketIndex > -1) {
     socketList.splice(socketIndex, 1);                          // remove socket for user's list
   }
-  if (userToSocketIdsMap[userId].length == 0) {
+  if (socketList.length == 0) {
     const { [userId]: sockList, ...rest0 } = userToSocketIdsMap;
     const { [userId]: prefs, ...rest1 } = userInfoMap;
     userToSocketIdsMap = rest0;
@@ -131,11 +133,11 @@ function cleanUpSocketReferences(socket) {
 
 const createPool = async () => {
   return await mysql.createPool({
-    user: dbUser,
-    password: dbPassword,
+    user: 'root', //dbUser,
+    password: 'meanion_sql@lingo', //dbPassword,
     database: dbServer,
-    host: hostIp,
-    port: hostPort,
+    host: '34.71.243.72', //hostIp,
+    port: '3306', //hostPort,
     connectionLimit: 5,
     connectTimeout: 10000,                          // 10 seconds
     acquireTimeout: 10000,                          // 10 seconds
@@ -159,6 +161,63 @@ async function getUsers(chatRoom) {
     allUsers = [];
   }
   return allUsers;
+}
+
+const INSERT_USER_SQL = `INSERT INTO roomusers_v2
+   (id, chatroom_id, message_locale, audio_locale, user_id, name, socket_id)
+   VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), ?, ?, ?, ?, ?)`;
+
+const UPDATE_USER_SQL = `UPDATE roomusers_v2
+   SET message_locale = ?, audio_locale = ?, socket_id = ?, disconnected = 0
+   WHERE chatroom_id = UUID_TO_BIN(?)
+   AND user_id = ?`;
+
+const DISCONNECT_USER_SQL = `UPDATE roomusers_v2
+   SET disconnected = 1
+   WHERE socket_id = ?
+   AND user_id = ?`;
+
+async function registerNewUser(data, updateOnly = false) {
+  dbPool = dbPool || (await createPoolAndEnsureSchema());
+  try {
+    let userUpdateQuery = await dbPool.query(
+      UPDATE_USER_SQL, [
+      data.textLocale,
+      data.audioLocale,
+      data.sId,
+      data.chatRoomId,
+      data.uId
+    ]);
+    if (userUpdateQuery && userUpdateQuery.affectedRows === 1) {
+      console.log(`Update user query: ${JSON.stringify(userUpdateQuery)}`);
+      return;
+    }
+    if (updateOnly) {
+      return;
+    }
+    userUpdateQuery = await dbPool.query(
+      INSERT_USER_SQL, [
+      data.chatRoomId,
+      data.textLocale,
+      data.audioLocale,
+      data.uId,
+      data.displayName,
+      data.sId
+    ]);
+    console.log(`Add new user query: ${JSON.stringify(userUpdateQuery)}`);
+  } catch (err) {
+    console.log(`Update user query ERROR: ${JSON.stringify(err)}`);
+  }
+}
+
+async function unregisterUser(userId, socketId) {
+  dbPool = dbPool || (await createPoolAndEnsureSchema());
+  try {
+    const disconnectQuery = await dbPool.query(DISCONNECT_USER_SQL, [socketId, userId]);
+    console.log(`Disconnect user query result: ${JSON.stringify(disconnectQuery)}`);
+  } catch (err) {
+    console.log(`Disconnect user query ERROR: ${JSON.stringify(err)}`);
+  }
 }
 
 async function fetchConnectedUsers(chatRoom) {

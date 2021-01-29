@@ -26,8 +26,8 @@ import socketio from 'socket.io-client';
 import ChatWindow from "./ChatWindow.vue";
 import InputArea from "./InputArea.vue";
 
-const SOCKETS_API = (process.env.VUE_APP_SOCKET_SERVER_URL) ?
-  process.env.VUE_APP_SOCKET_SERVER_URL : 'http://localhost:8081';
+// const SOCKETS_API = (process.env.VUE_APP_SOCKET_SERVER_URL) ?
+//   process.env.VUE_APP_SOCKET_SERVER_URL : 'http://localhost:8081';
 
 export default {
   name: "UserWindow",
@@ -59,7 +59,7 @@ export default {
   },
   data: () => {
     return {
-      socket: socketio(SOCKETS_API),
+      socket: socketio('http://localhost:8081'), //socketio(SOCKETS_API),
       loading: true,
       locales: [{ code: 'en', name: 'English' }],
       voices: ['None'],
@@ -127,6 +127,8 @@ export default {
     connect() {
       console.log(`Connected to sockets server with id: ${this.socket.id}`);
       this.socket.emit('newSocketConnection', {
+        displayName: this.$store.getters.user.displayName,
+        chatRoomId: 'cb3bf2c8-56dd-11eb-8833-42010a723002',
         sId: this.socket.id,
         uId: this.user.id,
         textLocale: this.user.textLocale,
@@ -142,6 +144,7 @@ export default {
     },
     updateUserPref(pref) {
       this.socket.emit('updateUserPref', {
+        chatRoomId: 'cb3bf2c8-56dd-11eb-8833-42010a723002',
         sId: this.socket.id,
         uId: this.user.id,
         ...pref,

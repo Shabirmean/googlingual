@@ -3,7 +3,7 @@
     <UserWindow
       :windowTheme="'left-container'"
       :chatMessages="chatMessagesForShabirmean"
-      :user="shabirmean"
+      :user="getShabirmean"
       roomId="cb3bf2c8-56dd-11eb-8833-42010a723002"
       @sendMessage="sendMessage"
       @sendAudioMessage="sendAudioMessage"
@@ -13,7 +13,7 @@
     <UserWindow
       :windowTheme="'right-container'"
       :chatMessages="chatMessagesForMom"
-      :user="kairunnisa"
+      :user="getKairun"
       roomId="cb3bf2c8-56dd-11eb-8833-42010a723002"
       defaultLocale="ta"
       @sendMessage="sendMessage"
@@ -108,8 +108,30 @@ export default {
     chatMessagesForMom() {
       return Object.values(this.perUserMessages.kairunnisa).sort((a, b) => a.id < b.id);
     },
+    getShabirmean() {
+      return {
+        ...this.user,
+        username: 'shabirmean',
+        textLocale: 'en',
+        audioLocale: 'en-US',
+        avatar: 'avatar-male.png',
+        isAudioEnabled: true,
+        id: this.$store.getters.user.uid,
+      };
+    },
+    getKairun() {
+      return {
+        username: 'kairunnisa',
+        textLocale: 'ta',
+        audioLocale: 'ta-IN',
+        avatar: 'avatar-female.png',
+        isAudioEnabled: true,
+        id: '55YgRqTtsIWi2ApBnjofClqZXMWg',
+      };
+    },
   },
-  async created() {
+  created() {
+    console.log(this.user);
     this.sendPing();
     this.checkAndPing();
     this.pingChron = setInterval(() => { this.pingTimer -= 1; }, 1000);
@@ -117,7 +139,7 @@ export default {
   methods: {
     checkAndPing() {
       if (this.pingTimer <= 0) {
-        this.sendPing();
+        // this.sendPing();
         this.pingTimer = 4;
       }
       setTimeout(this.checkAndPing, 4000);

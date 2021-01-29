@@ -3,22 +3,22 @@ package com.googlingual.services.translation.sdk.message;
 import java.util.UUID;
 
 public class Author {
-  private UUID id;
+  private String id;
   private String username;
 
   public Author() {
   }
 
-  public Author(UUID id, String username) {
+  public Author(String id, String username) {
     this.id = id;
     this.username = username;
   }
 
-  public UUID getId() {
+  public String getId() {
     return id;
   }
 
-  public void setId(UUID id) {
+  public void setId(String id) {
     this.id = id;
   }
 

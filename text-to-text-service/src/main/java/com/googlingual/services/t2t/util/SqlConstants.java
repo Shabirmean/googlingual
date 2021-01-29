@@ -1,7 +1,7 @@
 package com.googlingual.services.t2t.util;
 
 public class SqlConstants {
-  public static final String INSERT_MESSAGE_QUERY = "INSERT INTO messages ("
+  public static final String INSERT_MESSAGE_QUERY = "INSERT INTO messages_v2 ("
       + "id, "
       + "is_audio, "
       + "message_locale, "
@@ -20,6 +20,6 @@ public class SqlConstants {
       + "   ?,"                   // audio_message
       + "   ?,"                   // msg_index
       + "   UUID_TO_BIN(?),"      // chatroom_id
-      + "   UUID_TO_BIN(?)"       // sender
+      + "   ?"                    // sender
       + ");";
 }

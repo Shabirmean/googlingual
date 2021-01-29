@@ -114,6 +114,7 @@ export default {
     },
     audioLocaleOptions(newV) {
       this.selectedAudioLocale = newV[0].value;
+      this.updateUserPref();
     }
   }
 };

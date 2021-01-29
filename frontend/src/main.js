@@ -42,6 +42,7 @@ const store = new Vuex.Store({
   },
   getters: {
     accessToken: (state) => state.user.accessToken,
+    user: (state) => state.user,
   }
 });
 

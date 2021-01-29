@@ -10,7 +10,7 @@ public class MessageDao {
   private static final Gson GSON = new Gson();
   private UUID id;
   private UUID chatRoomId;
-  private UUID sender;
+  private String sender;
   private int messageIndex;
   private String message;
   private String audioMessage;
@@ -73,11 +73,11 @@ public class MessageDao {
     this.chatRoomId = chatRoomId;
   }
 
-  public UUID getSender() {
+  public String getSender() {
     return sender;
   }
 
-  public void setSender(UUID sender) {
+  public void setSender(String sender) {
     this.sender = sender;
   }
 
