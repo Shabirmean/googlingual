@@ -62,6 +62,7 @@ public class AuthenticationFilter implements Filter {
     HttpServletRequest httpRequest = (HttpServletRequest) request;
     HttpServletResponse httpResponse = (HttpServletResponse) response;
     try {
+      logger.info("Received request with HTTP METHOD: " + httpRequest.getMethod());
       // if its an OPTIONS request then let it pass through
       if (httpRequest.getMethod().equals(HttpMethod.OPTIONS.toString())) {
         chain.doFilter(request, response);
