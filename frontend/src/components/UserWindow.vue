@@ -153,6 +153,7 @@ export default {
     chatRoomMessage(payload) {
       console.log(`Received message: ${JSON.stringify(payload)}`);
       if (payload.sender === this.user.id) {
+        console.log(`Skipping for user ${this.user.id}`);
         return;
       }
       this.$emit('appendMessage', {

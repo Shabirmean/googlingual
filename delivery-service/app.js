@@ -14,7 +14,7 @@
 
 'use strict';
 
-require('@google-cloud/debug-agent').start({ serviceContext: { enableCanary: false } });
+require('@google-cloud/debug-agent').start({ serviceContext: { enableCanary: false }, allowExpressions: true });
 const {PubSub} = require('@google-cloud/pubsub');
 const {SecretManagerServiceClient} = require('@google-cloud/secret-manager');
 const mysql = require('promise-mysql');
