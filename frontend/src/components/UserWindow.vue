@@ -100,8 +100,9 @@ export default {
     },
     async loadLocales() {
       const localesResp = await GooglingualApi.locales();
+      console.log(localesResp);
       this.localesGiveupCount += 1;
-      if (localesResp.status === 200) {
+      if (localesResp && localesResp.status === 200) {
         this.locales = this.hasElements(localesResp.data.results) ? localesResp.data.results : [ { code: 'en', name: 'English' } ];
         this.loading = false;
         return;

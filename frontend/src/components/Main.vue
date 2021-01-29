@@ -91,8 +91,6 @@ export default {
         kairunnisa: DUMMY_MSGS
       },
       pingTimer: 4,
-      pingTimeInterval: null,
-      pingCounter: 0,
       pingChron: null,
     };
   },
@@ -110,43 +108,19 @@ export default {
     },
   },
   async created() {
-    // this.pingTimeInterval = setInterval(() => {
-    //   this.pingTimer -= 1;
-    //   if (this.pingTimer === 0) {
-    //     clearInterval(this.pingTimeInterval);
-    //   }
-    // }, 1000);
-
-
-
-    // this.sendPing();
-    // setInterval(() => {
-    //   if ()
-
-    // }, 4000);
-
-    // this.pingChron = setInterval(() => {
-    //   if (this.pingCounter === 1000) {
-    //     console.log('Clearing ping chron...');
-    //     clearInterval(this.pingChron);
-    //     return;
-    //   }
-    //   this.pingCounter += 1;
-      // GooglingualApi.send({
-      //   roomId: 'cb3bf539-56dd-11eb-8833-42010a723002',
-      //   author: {
-      //     id: 'bd63bae8-5744-11eb-8833-42010a723002',
-      //     username: 'afifa',
-      //   },
-      //   text: {
-      //     message: 'Ping',
-      //     locale: 'en',
-      //   },
-      // });
-    // }, 3000);
+    this.sendPing();
+    this.checkAndPing();
+    this.pingChron = setInterval(() => { this.pingTimer -= 1; }, 1000);
   },
   methods: {
-    async sendPing() {
+    checkAndPing() {
+      if (this.pingTimer <= 0) {
+        this.sendPing();
+        this.pingTimer = 4;
+      }
+      setTimeout(this.checkAndPing, 4000);
+    },
+    sendPing() {
       GooglingualApi.send({
         roomId: 'cb3bf539-56dd-11eb-8833-42010a723002',
         author: {

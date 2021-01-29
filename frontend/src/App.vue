@@ -12,7 +12,7 @@
         <button @click="signOut" type="button" class="btn btn-danger" style="margin-bottom: 10px; font-weight: bold;">
           <i class="fas fa-sign-out-alt"></i>Sign Out
         </button>
-        <Main :user="signedInUser"/>
+        <Main ref="main" :user="signedInUser"/>
       </div>
     </div>
     <button
@@ -113,6 +113,7 @@ export default {
     async signOut(event) {
       event.preventDefault();
       await firebase.auth().signOut();
+      clearInterval(this.$refs.main.pingChron);
       window.location.reload();
     },
   },

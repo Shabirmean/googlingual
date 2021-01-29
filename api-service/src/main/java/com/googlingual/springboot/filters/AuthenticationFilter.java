@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -60,9 +61,14 @@ public class AuthenticationFilter implements Filter {
       throws ServletException {
     HttpServletRequest httpRequest = (HttpServletRequest) request;
     HttpServletResponse httpResponse = (HttpServletResponse) response;
-    String pingHeader = httpRequest.getHeader(PING_HEADER);
     try {
+      // if its an OPTIONS request then let it pass through
+      if (httpRequest.getMethod().equals(HttpMethod.OPTIONS.toString())) {
+        chain.doFilter(request, response);
+        return;
+      }
       // if its a keep alive message then let it pass through without auth check
+      String pingHeader = httpRequest.getHeader(PING_HEADER);
       if (StringUtils.isNotBlank(pingHeader) && pingHeader.equals("keep-alive")) {
         chain.doFilter(request, response);
       }
