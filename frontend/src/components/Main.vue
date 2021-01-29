@@ -34,7 +34,7 @@ const DUMMY_MSGS = {
   "1": {
     id: 1,
     author: {
-      id: '54799366-56dd-11eb-8833-42010a723002',
+      id: 'ApBnjofClqZXMWg55YgRqTtsIWi2',
       username: 'shabirmean',
       avatar: "avatar-male.png",
     },
@@ -73,7 +73,7 @@ export default {
   data: () => {
     return {
       shabirmean: {
-        id: '54799366-56dd-11eb-8833-42010a723002',
+        id: 'ApBnjofClqZXMWg55YgRqTtsIWi2',
         username: 'shabirmean',
         textLocale: 'en',
         audioLocale: 'en-US',
@@ -81,7 +81,7 @@ export default {
         isAudioEnabled: true,
       },
       kairunnisa: {
-        id: '547996d3-56dd-11eb-8833-42010a723002',
+        id: '55YgRqTtsIWi2ApBnjofClqZXMWg',
         username: 'kairunnisa',
         textLocale: 'ta',
         audioLocale: 'ta-IN',
@@ -193,6 +193,7 @@ export default {
     async appendMessage(msg) {
       console.log(msg);
       const messages = this.perUserMessages[msg.recipient.username];
+      console.log(messages);
       const msgAuthor = this.getUser(msg.sender);
       if (!msgAuthor) {
         return;
