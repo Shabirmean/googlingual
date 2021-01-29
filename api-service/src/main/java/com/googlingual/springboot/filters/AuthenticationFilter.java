@@ -67,6 +67,8 @@ public class AuthenticationFilter implements Filter {
         chain.doFilter(request, response);
       }
       String authorizationHeader = httpRequest.getHeader(AUTHORIZATION_HEADER);
+      authorizationHeader = authorizationHeader == null ?
+          httpRequest.getHeader(AUTHORIZATION_HEADER.toLowerCase()) : authorizationHeader;
       if (StringUtils.isBlank(authorizationHeader)) {
         logger.warning("Authorization header not found");
         httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
