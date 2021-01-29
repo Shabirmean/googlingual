@@ -135,7 +135,7 @@ public class InitMessage implements BackgroundFunction<PubSubMessage> {
       insertMessageStmt.setInt(7, nextIndex);
       insertMessageStmt.setBoolean(8, true);
       insertMessageStmt.setString(9, chatRoomId);
-      insertMessageStmt.setString(10, chatMessage.getAuthor().getId().toString());
+      insertMessageStmt.setString(10, chatMessage.getAuthor().getId());
       insertMessageStmt.execute();
       connection.commit();
       logger.info(

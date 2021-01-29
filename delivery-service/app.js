@@ -133,11 +133,11 @@ function cleanUpSocketReferences(socket) {
 
 const createPool = async () => {
   return await mysql.createPool({
-    user: 'root', //dbUser,
-    password: 'meanion_sql@lingo', //dbPassword,
+    user: dbUser,
+    password: dbPassword,
     database: dbServer,
-    host: '34.71.243.72', //hostIp,
-    port: '3306', //hostPort,
+    host: hostIp,
+    port: hostPort,
     connectionLimit: 5,
     connectTimeout: 10000,                          // 10 seconds
     acquireTimeout: 10000,                          // 10 seconds
@@ -224,10 +224,10 @@ async function fetchConnectedUsers(chatRoom) {
   dbPool = dbPool || (await createPoolAndEnsureSchema());
   try {
     const stmt = `SELECT
-       BIN_TO_UUID(user_id) user_id,
+       user_id,
        message_locale,
        audio_locale
-      FROM roomusers
+      FROM roomusers_v2
       WHERE chatroom_id = UUID_TO_BIN(?);`;
     const roomUsersQuery = dbPool.query(stmt, [chatRoom]);
     return await roomUsersQuery;
