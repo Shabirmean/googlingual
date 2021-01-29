@@ -79,7 +79,7 @@ public class AuthenticationFilter implements Filter {
         return;
       }
 
-      String token = tokenParts[0];
+      String token = tokenParts[1];
       GoogleIdTokenVerifier verifier = getTokenVerifier();
       GoogleIdToken idToken = verifier.verify(token);
       if (idToken != null) {

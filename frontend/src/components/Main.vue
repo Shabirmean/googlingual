@@ -90,6 +90,8 @@ export default {
         shabirmean: DUMMY_MSGS,
         kairunnisa: DUMMY_MSGS
       },
+      pingTimer: 4,
+      pingTimeInterval: null,
       pingCounter: 0,
       pingChron: null,
     };
@@ -108,8 +110,20 @@ export default {
     },
   },
   async created() {
-    this.sendPing();
-    // setTimeout(());
+    // this.pingTimeInterval = setInterval(() => {
+    //   this.pingTimer -= 1;
+    //   if (this.pingTimer === 0) {
+    //     clearInterval(this.pingTimeInterval);
+    //   }
+    // }, 1000);
+
+
+
+    // this.sendPing();
+    // setInterval(() => {
+    //   if ()
+
+    // }, 4000);
 
     // this.pingChron = setInterval(() => {
     //   if (this.pingCounter === 1000) {
