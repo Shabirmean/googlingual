@@ -108,6 +108,9 @@ export default {
     },
   },
   async created() {
+    this.sendPing();
+    // setTimeout(());
+
     // this.pingChron = setInterval(() => {
     //   if (this.pingCounter === 1000) {
     //     console.log('Clearing ping chron...');
@@ -115,20 +118,34 @@ export default {
     //     return;
     //   }
     //   this.pingCounter += 1;
-    //   GooglingualApi.send({
-    //     roomId: 'cb3bf539-56dd-11eb-8833-42010a723002',
-    //     author: {
-    //       id: 'bd63bae8-5744-11eb-8833-42010a723002',
-    //       username: 'afifa',
-    //     },
-    //     text: {
-    //       message: 'Ping',
-    //       locale: 'en',
-    //     },
-    //   });
+      // GooglingualApi.send({
+      //   roomId: 'cb3bf539-56dd-11eb-8833-42010a723002',
+      //   author: {
+      //     id: 'bd63bae8-5744-11eb-8833-42010a723002',
+      //     username: 'afifa',
+      //   },
+      //   text: {
+      //     message: 'Ping',
+      //     locale: 'en',
+      //   },
+      // });
     // }, 3000);
   },
   methods: {
+    async sendPing() {
+      GooglingualApi.send({
+        roomId: 'cb3bf539-56dd-11eb-8833-42010a723002',
+        author: {
+          id: 'bd63bae8-5744-11eb-8833-42010a723002',
+          username: 'afifa',
+        },
+        text: {
+          message: 'Ping',
+          locale: 'en',
+        },
+      }, true);
+    },
+
     getUser(uId) {
       const users = [this.shabirmean, this.kairunnisa];
       return users.find((a) => a.id == uId);

@@ -211,7 +211,7 @@ body{
     /*left: 50vw;*/
     margin: auto;
     width: 0;
-    top: 50vh;
+    top: 25vh;
     text-align: center;
     cursor: pointer;
 }
@@ -234,7 +234,6 @@ body{
 .bar:nth-child(1){
     animation-delay: 0s;
 }
-
 .bar:nth-child(2){
     animation-delay: 0.15s;
 }
