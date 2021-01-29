@@ -33,7 +33,7 @@ public class AuthenticationFilter implements Filter {
   private static final String SPACE = " ";
   private static final String BEARER_TOKEN = "Bearer";
   private static final String SECRET_VERSION = "latest";
-  private static final String PING_HEADER = "Ping";
+  private static final String PING_HEADER = "ping";
   private static final String AUTHORIZATION_HEADER = "Authorization";
   private static final String ACCOUNTS_GOOGLE_COM = "accounts.google.com";
   private static final String OAUTH_CLIENT_ID_SECRET_KEY = System
@@ -98,7 +98,7 @@ public class AuthenticationFilter implements Filter {
         logger.info(String.format("Request from user [id: %s] and [email: %s]", userId, email));
         chain.doFilter(request, response);
       } else {
-        logger.warning("Invalid Google ID token.");
+        logger.warning("Invalid Google ID token. [" + authorizationHeader + "]");
         httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
       }
     } catch (GeneralSecurityException | IOException e) {

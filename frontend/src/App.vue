@@ -12,7 +12,7 @@
         <button @click="signOut" type="button" class="btn btn-danger" style="margin-bottom: 10px; font-weight: bold;">
           <i class="fas fa-sign-out-alt"></i>Sign Out
         </button>
-        <Main ref="main" :user="signedInUser"/>
+        <Main ref="main" :user="signedInUser" @signOut="signOut"/>
       </div>
     </div>
     <button

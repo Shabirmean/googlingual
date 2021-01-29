@@ -17,7 +17,7 @@ export default {
       'Authorization': `Bearer ${store.getters.accessToken}`,
     };
     if (isPing) {
-      requestHeaders['Ping'] = 'keep-alive';
+      requestHeaders['ping'] = 'keep-alive';
     }
     return axios.post(`${API_SERVER_URL}/send`, message, { headers: requestHeaders })
       .catch((error) => {
@@ -35,6 +35,7 @@ export default {
       }
     }).catch((error) => {
       console.log({ ...error })
+      console.log(error.response)
       if (!error.response) {
         return { status: 500 };
       }

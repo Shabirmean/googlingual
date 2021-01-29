@@ -8,6 +8,7 @@
       @sendMessage="sendMessage"
       @sendAudioMessage="sendAudioMessage"
       @appendMessage="appendMessage"
+      @signOut="signOut"
     ></UserWindow>
     <UserWindow
       :windowTheme="'right-container'"
@@ -18,6 +19,7 @@
       @sendMessage="sendMessage"
       @sendAudioMessage="sendAudioMessage"
       @appendMessage="appendMessage"
+      @signOut="signOut"
     ></UserWindow>
   </div>
 </template>
@@ -133,7 +135,6 @@ export default {
         },
       }, true);
     },
-
     getUser(uId) {
       const users = [this.shabirmean, this.kairunnisa];
       return users.find((a) => a.id == uId);
@@ -237,6 +238,9 @@ export default {
         },
       };
       GooglingualApi.send(toSendJson);
+    },
+    signOut() {
+      this.$emit('signOut');
     },
   },
 };

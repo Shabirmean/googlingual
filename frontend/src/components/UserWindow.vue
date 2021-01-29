@@ -108,7 +108,8 @@ export default {
         return;
       }
       if (this.localesGiveupCount >= 10) {
-        this.loading = false;
+        this.$emit('signOut');
+        // this.loading = false;
         return;
       }
       setTimeout(this.loadLocales, 7500);
