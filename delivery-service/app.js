@@ -263,7 +263,7 @@ async function handlePubSubMessage(message) {
         (!isAudio && userInfoMap[uId].textLocale === chatMessage.messageLocale)) {
       // socketIdList.forEach(socketId => {
       if (socketsMap[socketId]) {
-        console.log(`<SUCCESS> Publishing message for user [${uId}] pver socket [${socketId}]`);
+        console.log(`<SUCCESS> Publishing message for user [${uId}] over socket [${socketId}]`);
         socketsMap[socketId].emit('chatRoomMessage', chatMessage);
       } else {
         console.log(`<WARN> Socket not found for user [${uId}] with socket id [${socketId}]`);
