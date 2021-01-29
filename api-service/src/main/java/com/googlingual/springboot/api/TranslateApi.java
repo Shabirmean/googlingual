@@ -36,10 +36,11 @@ import org.springframework.web.bind.annotation.RestController;
 @CrossOrigin(origins = "*")
 public class TranslateApi {
   private static final Logger logger = Logger.getLogger(TranslateApi.class.getName());
-  private static final String PROJECT_GCLOUD_DPE = System.getenv("GOOGLE_CLOUD_PROJECT");
   private static final String PUBLISH_UNTRANSLATED_MSG_TOPIC = System.getenv("PUBLISH_UNTRANSLATED_MSG_TOPIC");
   private static final Gson GSON = new Gson();
   private static Publisher publisher;
+
+  public static final String PROJECT_GCLOUD_DPE = System.getenv("GOOGLE_CLOUD_PROJECT");
 
   @GetMapping("/hello")
   public String hello() {
