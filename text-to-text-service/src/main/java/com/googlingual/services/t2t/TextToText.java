@@ -107,7 +107,9 @@ public class TextToText implements BackgroundFunction<PubSubMessage> {
     String sourceLocale = messageDao.getMessageLocale();
     String destinationLocale = exchangeMessage.getDestinationLocale();
     if (sourceLocale.equals(destinationLocale)) {
-      logger.info("Skipping text translation for source language " + sourceLocale);
+      logger.info(String.format(
+          "Skipping text translation for source language [%s]. Directly forwarding to delivery and audio services", sourceLocale));
+      publishTranslatedMessage(exchangeMessage);
       exchangeMessage.getAudioDestinationLocales()
           .forEach(al -> logger.info(String.format("Invoking text-to-speech for source lang [%s] with audio lang [%s]", sourceLocale, al)));
       for (String audioLocale: exchangeMessage.getAudioDestinationLocales()) {
