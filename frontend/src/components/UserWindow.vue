@@ -151,6 +151,7 @@ export default {
       });
     },
     chatRoomMessage(payload) {
+      console.log(`Received message: ${JSON.stringify(payload)}`);
       if (payload.sender === this.user.id) {
         return;
       }

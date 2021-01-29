@@ -245,11 +245,12 @@ async function handlePubSubMessage(message) {
   const payload = JSON.parse(message.data);
   console.log(`Received message ${message.id} with attributes: `, message.attributes);
   message.ack();
-  console.log(payload);
+  console.log(JSON.stringify(payload));
 
   const chatMessage = payload.message;
   const chatRoom = chatMessage.chatRoomId;
   const roomUsers = await getUsers(chatRoom);
+  console.log(JSON.stringify(roomUsers));
   roomUsers.forEach(user => {
     const uId = user.user_id;
     const socketId = user.socket_id;
