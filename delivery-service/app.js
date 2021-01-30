@@ -254,22 +254,15 @@ async function handlePubSubMessage(message) {
   roomUsers.forEach(user => {
     const uId = user.user_id;
     const socketId = user.socket_id;
-    //const socketIdList = userToSocketIdsMap[uId];
-    // if (!socketIdList || !userInfoMap[uId]) {
-    //   return;
-    // }
-
     const isAudio = !!chatMessage.audioMessage;
     if ((isAudio && userInfoMap[uId].audioLocale === chatMessage.audioLocale) ||
-        (!isAudio && userInfoMap[uId].textLocale === chatMessage.messageLocale)) {
-      // socketIdList.forEach(socketId => {
+      (!isAudio && userInfoMap[uId].textLocale === chatMessage.messageLocale)) {
       if (socketsMap[socketId]) {
         console.log(`<SUCCESS> Publishing message for user [${uId}] over socket [${socketId}]`);
         socketsMap[socketId].emit('chatRoomMessage', chatMessage);
       } else {
         console.log(`<WARN> Socket not found for user [${uId}] with socket id [${socketId}]`);
       }
-      // });
     } else {
       console.log(`<WARN> Delivery criteria not met for [${uId}] with socket id [${socketId}]`);
     }
