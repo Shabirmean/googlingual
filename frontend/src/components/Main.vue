@@ -190,7 +190,7 @@ export default {
       };
       GooglingualApi.send(toSendJson);
     },
-    async reorderMsgs(msg) {
+    async reorderMsgs() {
       let plusOne = false;
       const currentMsgs = this.userMessages.sort((a, b) => a.id - b.id);
       const reordered = currentMsgs.reduce((acc, curr, idx) => {
