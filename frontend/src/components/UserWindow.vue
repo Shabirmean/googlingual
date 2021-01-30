@@ -105,7 +105,7 @@ export default {
       if (localesResp && localesResp.status === 200) {
         this.locales = this.hasElements(localesResp.data.results) ?
           localesResp.data.results : [ { code: 'en', name: 'English' } ];
-        this.loading = false;
+        this.registerUserSocket();
         return;
       }
       if (this.localesGiveupCount >= 5) {
@@ -125,17 +125,21 @@ export default {
       }
       this.fetchingVoices = false;
     },
-    connect() {
-      console.log(`Connected to sockets server with id: ${this.socket.id}`);
+    registerUserSocket() {
       this.socket.emit('newSocketConnection', {
-        displayName: this.user.displayName,
-        chatRoomId: this.roomId,
         sId: this.socket.id,
         uId: this.user.id,
+        avatar: this.user.avatar,
+        displayName: this.user.displayName,
+        chatRoomId: this.roomId,
         textLocale: this.user.textLocale,
         audioLocale:this.user.audioLocale,
-        audioEnabled: true,
+        audioEnabled: this.user.audioEnabled,
       });
+      this.loading = false;
+    },
+    connect() {
+      console.log(`Connected to sockets server with id: ${this.socket.id}`);
     },
     disconnect() {
       console.log(`Client ${this.socket.id} disconnected from sockets server`);
@@ -149,6 +153,8 @@ export default {
         chatRoomId: this.roomId,
         sId: this.socket.id,
         uId: this.user.id,
+        avatar: this.user.avatar,
+        displayName: this.user.displayName,
         ...pref,
       });
     },

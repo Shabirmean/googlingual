@@ -70,6 +70,7 @@ img {
 .message-container {
   display: flex;
   flex-direction: column;
+  margin-top: 5px;
 }
 .message {
   width: 45%;

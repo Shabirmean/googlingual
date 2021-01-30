@@ -53,10 +53,6 @@
           <div v-if="isRecording" class="ar-recorder__duration">
             {{ recordedTime }}
           </div>
-          <!--audio v-if="!isRecording" controls>
-            <source :src="audioMessage.url" />
-            Your browser does not support the audio element.
-          </audio-->
         </div>
       </div>
     </form>

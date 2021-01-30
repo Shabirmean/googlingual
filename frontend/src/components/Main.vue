@@ -11,41 +11,12 @@
       @appendMessage="appendMessage"
       @signOut="signOut"
     ></UserWindow>
-    <!--UserWindow
-      :windowTheme="'right-container'"
-      :chatMessages="chatMessagesForMom"
-      :user="getKairun"
-      roomId="cb3bf2c8-56dd-11eb-8833-42010a723002"
-      defaultLocale="ta"
-      @sendMessage="sendMessage"
-      @sendAudioMessage="sendAudioMessage"
-      @appendMessage="appendMessage"
-      @signOut="signOut"
-    ></UserWindow-->
   </div>
 </template>
 
 <script>
 import GooglingualApi from "@/services/api/Googlingual";
 import UserWindow from "./UserWindow.vue";
-
-// const WANAKKAM =
-//   "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";
-// const DUMMY_MSGS = {
-//   "1": {
-//     id: 1,
-//     author: {
-//       id: 'googlingual-bot',
-//       username: 'googlingual-bot',
-//       avatar: "cbo_reallyhappy.png",
-//     },
-//     textMessage: "Welcome to Googlingual chat!",
-//     textLocale: 'en',
-//     audioLocale: 'en-IN',
-//     textOriginal: "Welcome to Googlingual chat!",
-//     audioMessage: null,
-//   },
-// };
 
 export default {
   name: "Main",
@@ -60,22 +31,6 @@ export default {
   },
   data: () => {
     return {
-      // shabirmean: {
-      //   id: 'ApBnjofClqZXMWg55YgRqTtsIWi2',
-      //   username: 'shabirmean',
-      //   textLocale: 'en',
-      //   audioLocale: 'en-US',
-      //   avatar: 'avatar-male.png',
-      //   isAudioEnabled: true,
-      // },
-      // kairunnisa: {
-      //   id: '55YgRqTtsIWi2ApBnjofClqZXMWg',
-      //   username: 'kairunnisa',
-      //   textLocale: 'ta',
-      //   audioLocale: 'ta-IN',
-      //   avatar: 'avatar-female.png',
-      //   isAudioEnabled: true,
-      // },
       userMessages: [{
         id: 1,
         author: {
@@ -89,10 +44,6 @@ export default {
         textOriginal: "Welcome to Googlingual chat!",
         audioMessage: null,
       }],
-      // perUserMessages: {
-      //   shabirmean: DUMMY_MSGS,
-      //   kairunnisa: DUMMY_MSGS
-      // },
       pingTimer: 4,
       pingChron: null,
     };
@@ -104,48 +55,15 @@ export default {
     currentUser() {
       return this.user;
     },
-    // chatMessagesForUser() {
-    //   return Object.values(this.perUserMessages.shabirmean)
-    //     .map((m) => {
-    //       m.author.avatar = this.user.photoURL;
-    //       return m;
-    //     })
-    //     .sort((a, b) => a.id < b.id);
-    // },
-    // chatMessagesForMom() {
-    //   return Object.values(this.perUserMessages.kairunnisa).sort((a, b) => a.id < b.id);
-    // },
-    // getShabirmean() {
-    //   return {
-    //     ...this.user,
-    //     username: 'shabirmean',
-    //     textLocale: 'en',
-    //     audioLocale: 'en-US',
-    //     avatar: 'avatar-male.png',
-    //     isAudioEnabled: true,
-    //     id: this.$store.getters.user.uid,
-    //   };
-    // },
-    // getKairun() {
-    //   return {
-    //     username: 'kairunnisa',
-    //     textLocale: 'ta',
-    //     audioLocale: 'ta-IN',
-    //     avatar: 'avatar-female.png',
-    //     isAudioEnabled: true,
-    //     id: '55YgRqTtsIWi2ApBnjofClqZXMWg',
-    //   };
-    // },
   },
   created() {
-    console.log(this.user);
     // this.sendPing();
     // this.checkAndPing();
     // this.pingChron = setInterval(() => { this.pingTimer -= 1; }, 1000);
   },
   methods: {
     getLastIndex() {
-      return this.userMessages.sort((a, b) => a.id > b.id)[0].id;
+      return this.userMessages[this.userMessages.length - 1].id;
     },
     checkAndPing() {
       if (this.pingTimer <= 0) {
@@ -175,8 +93,8 @@ export default {
         return;
       }
       const newMsg = {
-        id: this.getLastIndex() + 1,
         ...msg,
+        id: this.getLastIndex() + 1,
         textLocale: msg.textLocale,
         textOriginal: msg.textMessage,
       };
@@ -194,9 +112,7 @@ export default {
       });
     },
     async appendMessage(msg) {
-      console.log(msg);
-      const msgAuthor = msg.sender === this.user.id;
-      if (!msgAuthor) {
+      if (msg.sender.id === this.user.id) {
         return;
       }
       let audio = null;
@@ -204,18 +120,30 @@ export default {
         audio = new Audio(`data:audio/wav;base64,${msg.audioMessage}`);
       }
       const receivedMsg = {
-        author: msgAuthor,
+        author: msg.sender,
         id: msg.messageIndex,
         textMessage: msg.message,
         textLocale: msg.messageLocale,
         audioMessage: audio ? audio.src : null,
         audioLocale: msg.audioLocale,
       };
-      if (this.getLastIndex() >= msg.messageIndex) {
-        this.reorderMsgs();
+      const lastIndex = this.getLastIndex();
+      const lastMessage = this.userMessages[this.userMessages.length - 1];
+      if (receivedMsg.id === lastIndex &&
+        lastMessage.textMessage === receivedMsg.textMessage &&
+        lastMessage.audioMessage === receivedMsg.audioMessage) {
+        return;
       }
-      this.userMessages = (this.getLastIndex() >= receivedMsg.id) ?
-        this.reorderMsgs(receivedMsg) : { ...this.userMessages, receivedMsg };
+      console.log(`Appending received msg:
+        ID: ${msg.id},
+        INDEX: ${msg.messageIndex}.
+        HAS AUDIO: ${!!msg.audioMessage}`);
+      if (lastIndex === receivedMsg.id && lastMessage.textMessage === receivedMsg.textMessage) {
+        this.userMessages[this.userMessages.length - 1].audioMessage = receivedMsg.audioMessage;
+        return;
+      }
+      this.userMessages = [ ...this.userMessages, receivedMsg ];
+      this.reorderMsgs();
     },
     async sendAudioMessage(msg, audioMessage) {
       if (!audioMessage || !audioMessage.url) {
@@ -262,23 +190,30 @@ export default {
       };
       GooglingualApi.send(toSendJson);
     },
-    signOut() {
-      this.$emit('signOut');
-    },
-    reorderMsgs(msg) {
-      const reOrderedMsgs = this.userMessages.reduce((acc, curr) => {
-        if (curr.id < msg.id) {
-          acc.append(curr);
-        } else if (curr.id === msg.id) {
-          acc.append(msg);
-          acc.append({ ...curr, id: curr.id + 1 });
+    async reorderMsgs(msg) {
+      let plusOne = false;
+      const currentMsgs = this.userMessages.sort((a, b) => a.id - b.id);
+      const reordered = currentMsgs.reduce((acc, curr, idx) => {
+        if (idx === 0) {
+          acc = [curr];
+          return acc;
+        }
+        if (curr.id === acc[idx - 1].idx) {
+          plusOne = true;
+          acc = [...acc, { ...curr, id: curr.id + 1 }];
         } else {
-          acc.append({ ...curr, id: curr.id + 1 });
+          acc = [...acc, curr];
         }
         return acc;
       }, []);
-      return reOrderedMsgs.sort((a, b) => a.id - b.id);
-    }
+      if (plusOne) {
+        console.log('Reordered messages...');
+        this.userMessages = reordered;
+      }
+    },
+    signOut() {
+      this.$emit('signOut');
+    },
   },
 };
 </script>
