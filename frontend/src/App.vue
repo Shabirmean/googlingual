@@ -67,7 +67,7 @@ export default {
       return this.signedIn;
     },
     signedInUser() {
-      return this.$store.state.user;
+      return this.$store.getters.user;
     }
   },
   created() {
@@ -91,10 +91,10 @@ export default {
               return;
             }
             appContext.$store.commit('setUser', {
-              uid: user.uid,
+              id: user.uid,
               displayName: user.displayName,
               email: user.email,
-              photoURL: user.photoURL,
+              avatar: user.photoURL,
               accessToken: token,
             });
             appContext.signedIn = true;

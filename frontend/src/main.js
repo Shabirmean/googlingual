@@ -19,24 +19,33 @@ Vue.config.productionTip = false
 const store = new Vuex.Store({
   state: {
     user: {
-      uid: null,
+      id: null,
       displayName: null,
-      photoURL: null,
       email: null,
+      avatar: null,
       accessToken: null,
+      textLocale: 'en',
+      audioLocale: 'en-US',
+      isAudioEnabled: false,
     }
   },
   mutations: {
     setUser(state, user) {
       state.user = { ...user };
     },
+    updatePref(state, pref) {
+      state.user = { ...state.user, ...pref };
+    },
     clearUser(state) {
       state.user = {
-        uid: null,
+        id: null,
         displayName: null,
-        photoURL: null,
         email: null,
+        avatar: null,
         accessToken: null,
+        textLocale: 'en',
+        audioLocale: 'en-US',
+        isAudioEnabled: false,
       };
     }
   },

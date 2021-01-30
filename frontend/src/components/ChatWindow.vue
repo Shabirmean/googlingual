@@ -20,7 +20,7 @@
             :message="message"
             :sent="message.author.id === userId"
             :avatar="message.author.avatar"
-            :author="message.author.username">
+            :author="message.author.displayName">
           </MessageBlock>
         </div>
       </section>

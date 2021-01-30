@@ -69,6 +69,7 @@ export default {
     };
   },
   async created() {
+    console.log(this.user.id);
     this.socket.on('connect', this.connect);
     this.socket.on('disconnect', this.disconnect);
     this.socket.on('userRegistered', this.userRegistered);
@@ -127,8 +128,8 @@ export default {
     connect() {
       console.log(`Connected to sockets server with id: ${this.socket.id}`);
       this.socket.emit('newSocketConnection', {
-        displayName: this.$store.getters.user.displayName,
-        chatRoomId: 'cb3bf2c8-56dd-11eb-8833-42010a723002',
+        displayName: this.user.displayName,
+        chatRoomId: this.roomId,
         sId: this.socket.id,
         uId: this.user.id,
         textLocale: this.user.textLocale,
@@ -143,17 +144,16 @@ export default {
       console.log(`User registration message:`, data);
     },
     updateUserPref(pref) {
+      this.$emit('updateUserPref', pref);
       this.socket.emit('updateUserPref', {
-        chatRoomId: 'cb3bf2c8-56dd-11eb-8833-42010a723002',
+        chatRoomId: this.roomId,
         sId: this.socket.id,
         uId: this.user.id,
         ...pref,
       });
     },
     chatRoomMessage(payload) {
-      // console.log(`Received message: ${JSON.stringify(payload)}`);
       if (payload.sender === this.user.id) {
-        console.log(`Skipping for user ${this.user.id}`);
         return;
       }
       this.$emit('appendMessage', {
@@ -164,8 +164,8 @@ export default {
     addMessage(newMessage) {
       this.$emit("sendMessage", {
         textMessage: newMessage,
-        textLocale: this.$refs.chatWindow.selectedTextLocale,
-        audioLocale: this.$refs.chatWindow.selectedAudioLocale,
+        textLocale: this.user.textLocale,
+        audioLocale: this.user.audioLocale,
         author: this.user,
         roomId: this.roomId,
       });
@@ -173,13 +173,19 @@ export default {
     addAudioMessage(audioMessage) {
       this.$emit("sendAudioMessage", {
         textMessage: 'Audio recording...',
-        textLocale: this.$refs.chatWindow.selectedTextLocale,
-        audioLocale: this.$refs.chatWindow.selectedAudioLocale,
+        textLocale: this.user.textLocale,
+        audioLocale: this.user.audioLocale,
         author: this.user,
         roomId: this.roomId,
       }, audioMessage);
     },
   },
+  // TODO: Remove after debuggin completed
+  watch: {
+    user(n, o) {
+      console.log(n.textLocale, o.textLocale);
+    },
+  }
 };
 </script>
 

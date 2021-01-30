@@ -69,7 +69,6 @@ import { convertTimeMMSS } from "@/services/lib/utils";
 
 export default {
   name: "InputArea",
-  props: {},
   data: () => {
     return {
       message: "",
