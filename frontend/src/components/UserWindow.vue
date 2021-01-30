@@ -180,12 +180,6 @@ export default {
       }, audioMessage);
     },
   },
-  // TODO: Remove after debuggin completed
-  watch: {
-    user(n, o) {
-      console.log(n.textLocale, o.textLocale);
-    },
-  }
 };
 </script>
 

@@ -139,9 +139,9 @@ export default {
   },
   created() {
     console.log(this.user);
-    this.sendPing();
-    this.checkAndPing();
-    this.pingChron = setInterval(() => { this.pingTimer -= 1; }, 1000);
+    // this.sendPing();
+    // this.checkAndPing();
+    // this.pingChron = setInterval(() => { this.pingTimer -= 1; }, 1000);
   },
   methods: {
     getLastIndex() {
