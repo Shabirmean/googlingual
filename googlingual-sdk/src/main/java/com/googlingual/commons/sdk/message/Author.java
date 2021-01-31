@@ -1,4 +1,4 @@
-package com.googlingual.springboot.sdk;
+package com.googlingual.commons.sdk.message;
 
 public class Author {
   private String id;

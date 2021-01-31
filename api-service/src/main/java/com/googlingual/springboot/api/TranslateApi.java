@@ -11,7 +11,6 @@ import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
 import com.googlingual.springboot.exception.GooglingualApiException;
-import com.googlingual.springboot.sdk.ApiResponse;
 import com.googlingual.springboot.sdk.Author;
 import com.googlingual.springboot.sdk.ChatMessage;
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package com.googlingual.springboot.sdk;
+package com.googlingual.springboot.api;
 
 import java.util.List;
 
