@@ -148,13 +148,10 @@ const createPool = async () => {
 };
 
 const createPoolAndEnsureSchema = async () => await createPool();
-let allUsers;
 let dbPool;
 
 async function getUsers(chatRoom) {
-  if (allUsers && allUsers.length > 0) {
-    return allUsers;
-  }
+  let allUsers;
   try {
     allUsers = await fetchConnectedUsers(chatRoom);
   } catch (err) {
@@ -165,11 +162,13 @@ async function getUsers(chatRoom) {
 }
 
 const INSERT_USER_SQL = `INSERT INTO roomusers_v2
-   (id, chatroom_id, message_locale, audio_locale, user_id, name, socket_id)
-   VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), ?, ?, ?, ?, ?);`;
+   (id, chatroom_id, message_locale, audio_locale, user_id, name, avatar,
+    socket_id, audio_enabled)
+    VALUES (UUID_TO_BIN(UUID()), UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?, ?);`;
 
 const UPDATE_USER_SQL = `UPDATE roomusers_v2
-   SET message_locale = ?, audio_locale = ?, socket_id = ?, disconnected = 0
+   SET message_locale = ?, audio_locale = ?, audio_enabled = ?,
+   socket_id = ?, name = ?, avatar = ?, disconnected = 0
    WHERE chatroom_id = UUID_TO_BIN(?)
    AND user_id = ?;`;
 
@@ -179,57 +178,69 @@ const DISCONNECT_USER_SQL = `UPDATE roomusers_v2
    AND user_id = ?;`;
 
 async function registerNewUser(data, updateOnly = false) {
-  dbPool = dbPool || (await createPoolAndEnsureSchema());
+  dbPool = dbPool || await createPoolAndEnsureSchema();
+  const audioEnabled = !!data.audioEnabled;
   try {
     let userUpdateQuery = await dbPool.query(
       UPDATE_USER_SQL, [
-      data.textLocale,
-      data.audioLocale,
-      data.sId,
-      data.chatRoomId,
-      data.uId
+        data.textLocale,
+        data.audioLocale,
+        audioEnabled,
+        data.sId,
+        data.displayName,
+        data.avatar,
+        data.chatRoomId,
+        data.uId
     ]);
     if (userUpdateQuery && userUpdateQuery.affectedRows === 1) {
-      console.log(`Update user query: ${JSON.stringify(userUpdateQuery)}`);
+      console.log(`<SUCCESS> Updated user query: ${JSON.stringify(userUpdateQuery)}`);
       return;
     }
-    if (updateOnly) {
-      return;
-    }
+  } catch (err) {
+    console.log(`<ERROR> Update user query: ${JSON.stringify(err)}`);
+  }
+  if (updateOnly) {
+    return;
+  }
+  try {
     userUpdateQuery = await dbPool.query(
       INSERT_USER_SQL, [
-      data.chatRoomId,
-      data.textLocale,
-      data.audioLocale,
-      data.uId,
-      data.displayName,
-      data.sId
+        data.chatRoomId,
+        data.textLocale,
+        data.audioLocale,
+        data.uId,
+        data.displayName,
+        data.avatar,
+        data.sId,
+        audioEnabled
     ]);
-    console.log(`Add new user query: ${JSON.stringify(userUpdateQuery)}`);
+    console.log(`<SUCCESS> Add new user query: ${JSON.stringify(userUpdateQuery)}`);
   } catch (err) {
-    console.log(`Update user query ERROR: ${JSON.stringify(err)}`);
+    console.log(`<ERROR> Add new user query ERROR: ${JSON.stringify(err)}`);
   }
 }
 
 async function unregisterUser(userId, socketId) {
-  dbPool = dbPool || (await createPoolAndEnsureSchema());
+  dbPool = dbPool || await createPoolAndEnsureSchema();
   try {
     const disconnectQuery = await dbPool.query(DISCONNECT_USER_SQL, [socketId, userId]);
-    console.log(`Disconnect user query result: ${JSON.stringify(disconnectQuery)}`);
+    console.log(`<SUCCESS> Disconnect user query result: ${JSON.stringify(disconnectQuery)}`);
   } catch (err) {
-    console.log(`Disconnect user query ERROR: ${JSON.stringify(err)}`);
+    console.log(`<ERROR> Disconnect user query: ${JSON.stringify(err)}`);
   }
 }
 
 async function fetchConnectedUsers(chatRoom) {
-  dbPool = dbPool || (await createPoolAndEnsureSchema());
+  dbPool = dbPool || await createPoolAndEnsureSchema();
   try {
     const stmt = `SELECT
        user_id,
        message_locale,
        audio_locale,
+       audio_enabled,
        socket_id,
-       name
+       name,
+       avatar
       FROM roomusers_v2
       WHERE chatroom_id = UUID_TO_BIN(?)
       AND disconnected = 0;`;
@@ -245,21 +256,33 @@ async function handlePubSubMessage(message) {
   const payload = JSON.parse(message.data);
   console.log(`Received message ${message.id} with attributes: `, message.attributes);
   message.ack();
-  console.log(JSON.stringify(payload));
 
   const chatMessage = payload.message;
   const chatRoom = chatMessage.chatRoomId;
   const roomUsers = await getUsers(chatRoom);
-  console.log(JSON.stringify(roomUsers));
+  const msgAuthor = roomUsers.find(u => u.user_id === chatMessage.sender);
+
   roomUsers.forEach(user => {
     const uId = user.user_id;
+    if (uId === msgAuthor.id) {
+      return;
+    }
     const socketId = user.socket_id;
     const isAudio = !!chatMessage.audioMessage;
-    if ((isAudio && userInfoMap[uId].audioLocale === chatMessage.audioLocale) ||
-      (!isAudio && userInfoMap[uId].textLocale === chatMessage.messageLocale)) {
+    const audioEnabled = !!user.audio_enabled;
+    if ((isAudio && audioEnabled && user.audio_locale === chatMessage.audioLocale) ||
+      (!isAudio && user.message_locale === chatMessage.messageLocale)) {
+      const toDeliverToUser = {
+        ...chatMessage,
+        sender: {
+          id: msgAuthor.user_id,
+          displayName: msgAuthor.name,
+          avatar: msgAuthor.avatar
+        }
+      }
       if (socketsMap[socketId]) {
         console.log(`<SUCCESS> Publishing message for user [${uId}] over socket [${socketId}]`);
-        socketsMap[socketId].emit('chatRoomMessage', chatMessage);
+        socketsMap[socketId].emit('chatRoomMessage', toDeliverToUser);
       } else {
         console.log(`<WARN> Socket not found for user [${uId}] with socket id [${socketId}]`);
       }
