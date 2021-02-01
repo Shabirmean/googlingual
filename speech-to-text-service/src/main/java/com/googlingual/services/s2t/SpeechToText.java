@@ -1,5 +1,8 @@
 package com.googlingual.services.s2t;
 
+import static com.googlingual.services.s2t.util.SqlConstants.SELECT_MESSAGE_QUERY;
+import static com.googlingual.services.s2t.util.SqlConstants.UPDATE_MESSAGE_QUERY;
+
 import com.google.cloud.functions.BackgroundFunction;
 import com.google.cloud.functions.Context;
 import com.google.cloud.pubsub.v1.Publisher;
@@ -17,14 +20,14 @@ import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
 import com.googlingual.services.s2t.SpeechToText.PubSubMessage;
 import com.googlingual.services.s2t.sdk.dao.MessageDao;
-import com.googlingual.services.s2t.util.SqlConstants;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +37,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.sql.DataSource;
+import org.apache.commons.lang3.StringUtils;
 
 @SuppressWarnings("unused")
 public class SpeechToText implements BackgroundFunction<PubSubMessage> {
@@ -97,55 +101,66 @@ public class SpeechToText implements BackgroundFunction<PubSubMessage> {
     return pool.getConnection();
   }
 
+  private MessageDao loadMessage(String messageId) {
+    Connection connection = null;
+    MessageDao messageDao = null;
+    try {
+      String query = String.format(SELECT_MESSAGE_QUERY, messageId);
+      connection = getConnection();
+      Statement sqlStatement = connection.createStatement();
+      ResultSet resultSet = sqlStatement.executeQuery(query);
+      while (resultSet.next()) {
+        String audioMessage = resultSet.getString("audio_message");
+        String audioLocale = resultSet.getString("audio_locale");
+        messageDao = new MessageDao();
+        messageDao.setId(UUID.fromString(messageId));
+        messageDao.setAudioMessage(audioMessage);
+        messageDao.setAudioLocale(audioLocale);
+      }
+      resultSet.close();
+      sqlStatement.close();
+    } catch (SQLException throwables) {
+      throwables.printStackTrace();
+    } finally {
+      try {
+        if (connection != null) {
+          connection.close();
+        }
+      } catch (SQLException se) {
+        se.printStackTrace();
+      }
+    }
+    return messageDao;
+  }
+
   @Override
   public void accept(PubSubMessage pubSubMessage, Context context) {
-    String receivedData = pubSubMessage.data != null ? pubSubMessage.data : "Received no data";
-    logger.info("Received encoded audio message: " + receivedData);
-    receivedData = new String(Base64.getDecoder().decode(pubSubMessage.data));
-    MessageDao exchangeMessage = MessageDao.fromJsonString(receivedData);
-    logger.info("Decoded Audio message: " + exchangeMessage.toString());
+    if (pubSubMessage.data == null || StringUtils.isBlank(pubSubMessage.data)) {
+      logger.warning("Received pubsub message with null/blank message id.");
+      return;
+    }
+    String messageId = new String(Base64.getDecoder().decode(pubSubMessage.data));
+    logger.info("Processing message id: " + messageId);
 
     Connection connection = null;
-    String encodedAudio = exchangeMessage.getAudioMessage();
-    String audioLocale = exchangeMessage.getAudioLocale();
+    MessageDao messageDao = loadMessage(messageId);
+    String encodedAudio = messageDao.getAudioMessage();
+    String audioLocale = messageDao.getAudioLocale();
     String textLocale = audioLocale.split("-")[0];
-    UUID messageId = exchangeMessage.getId();
     // Instantiates a client
-    try (SpeechClient speechClient = SpeechClient.create()) {
-      byte[] audioBytes = Base64.getDecoder().decode(encodedAudio);
-      ByteString byteContent = ByteString.copyFrom(audioBytes);
-      RecognitionConfig config = RecognitionConfig.newBuilder()
-          .setEncoding(AudioEncoding.LINEAR16)
-          .setLanguageCode(audioLocale)
-          .build();
-      RecognitionAudio audio = RecognitionAudio.newBuilder().setContent(byteContent).build();
-      RecognizeResponse response = speechClient.recognize(config, audio);
-      List<SpeechRecognitionResult> results = response.getResultsList();
-      for (SpeechRecognitionResult result : results) {
-        SpeechRecognitionAlternative alternative = result.getAlternativesList().get(0);
-        logger.info(String.format("Transcription: %s%n", alternative.getTranscript()));
-      }
-      String transcribedText = results.get(0).getAlternativesList().get(0).getTranscript();
-
+    try {
+      String transcribedText = transcribeMessage(encodedAudio, audioLocale);
       connection = getConnection();
-      connection.setAutoCommit(false);
-      PreparedStatement updateMessageQuery = connection.prepareStatement(
-          SqlConstants.UPDATE_MESSAGE_QUERY);
-      updateMessageQuery.setString(1, transcribedText);
-      updateMessageQuery.setString(2, textLocale);
-      updateMessageQuery.setString(3, messageId.toString());
-      updateMessageQuery.executeUpdate();
-      connection.commit();
+      String query = String.format(UPDATE_MESSAGE_QUERY, transcribedText, textLocale, false, messageId);
+      Statement updateMessageQuery = connection.createStatement();
+      updateMessageQuery.executeUpdate(query);
       updateMessageQuery.close();
       logger.info(
           String.format("Inserted transcribed text of audio message [id: %s]\n[lang: %s]\n[%s]",
               messageId, textLocale, transcribedText));
       logger.info(String.format(
           "Setting audio message [false] for transcribed message [%s] and re-publishing", messageId));
-      exchangeMessage.setAudio(false);
-      exchangeMessage.setMessage(transcribedText);
-      exchangeMessage.setMessageLocale(textLocale);
-      publishTranscribedMessage(exchangeMessage);
+      publishTranscribedMessage(messageId);
     } catch (IOException | SQLException ex) {
       logger.log(Level.SEVERE, "Failed to convert audio to text: [" + messageId + "]", ex);
       try {
@@ -166,9 +181,27 @@ public class SpeechToText implements BackgroundFunction<PubSubMessage> {
     }
   }
 
-  private void publishTranscribedMessage(MessageDao messageDao) {
-    String publishMessage = messageDao.getJsonString();
-    ByteString byteStr = ByteString.copyFrom(publishMessage, StandardCharsets.UTF_8);
+  private String transcribeMessage(String encodedAudio, String audioLocale) throws IOException {
+    SpeechClient speechClient = SpeechClient.create();
+    byte[] audioBytes = Base64.getDecoder().decode(encodedAudio);
+    ByteString byteContent = ByteString.copyFrom(audioBytes);
+    RecognitionConfig config = RecognitionConfig.newBuilder()
+        .setEncoding(AudioEncoding.LINEAR16)
+        .setLanguageCode(audioLocale)
+        .build();
+    RecognitionAudio audio = RecognitionAudio.newBuilder().setContent(byteContent).build();
+    RecognizeResponse response = speechClient.recognize(config, audio);
+    List<SpeechRecognitionResult> results = response.getResultsList();
+    for (SpeechRecognitionResult result : results) {
+      SpeechRecognitionAlternative alternative = result.getAlternativesList().get(0);
+      logger.info(String.format("Transcription: %s%n", alternative.getTranscript()));
+    }
+    speechClient.close();
+    return results.get(0).getAlternativesList().get(0).getTranscript();
+  }
+
+  private void publishTranscribedMessage(String messageId) {
+    ByteString byteStr = ByteString.copyFrom(messageId, StandardCharsets.UTF_8);
     PubsubMessage pubsubApiMessage = PubsubMessage.newBuilder().setData(byteStr).build();
     try {
       Publisher publisher = getPublisher();

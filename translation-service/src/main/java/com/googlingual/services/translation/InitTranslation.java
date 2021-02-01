@@ -1,6 +1,7 @@
 package com.googlingual.services.translation;
 
 import static com.googlingual.services.translation.util.SqlConstants.GET_LOCALES_QUERY;
+import static com.googlingual.services.translation.util.SqlConstants.SELECT_MESSAGE_QUERY;
 
 import com.google.cloud.functions.BackgroundFunction;
 import com.google.cloud.functions.Context;
@@ -12,23 +13,25 @@ import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
 import com.googlingual.services.translation.InitTranslation.PubSubMessage;
 import com.googlingual.services.translation.sdk.dao.MessageDao;
-import com.googlingual.services.translation.sdk.pubsub.PubSubExchangeMessage;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.sql.DataSource;
+import org.apache.commons.lang3.StringUtils;
 
 @SuppressWarnings("unused")
 public class InitTranslation implements BackgroundFunction<PubSubMessage> {
@@ -93,59 +96,76 @@ public class InitTranslation implements BackgroundFunction<PubSubMessage> {
     return pool.getConnection();
   }
 
-  @Override
-  public void accept(PubSubMessage pubSubMessage, Context context) {
-    String receivedData = pubSubMessage.data != null ? pubSubMessage.data : "Received no data";
-    logger.info("Received: " + receivedData);
-    receivedData = new String(Base64.getDecoder().decode(pubSubMessage.data));
-    MessageDao messageDao = MessageDao.fromJsonString(receivedData);
-    logger.info(messageDao.toString());
-
-    if (messageDao.isAudio()) {
-      forwardToSpeechToTextService(messageDao);
-      return;
-    }
-
+  private MessageDao loadMessage(String messageId) {
     Connection connection = null;
+    MessageDao messageDao = null;
     try {
+      String query = String.format(SELECT_MESSAGE_QUERY, messageId);
       connection = getConnection();
-      connection.setAutoCommit(false);
-      PreparedStatement getMessageLocaleStmt = connection.prepareStatement(GET_LOCALES_QUERY);
-      getMessageLocaleStmt.setString(1, messageDao.getChatRoomId().toString());
-      ResultSet resultsSet = getMessageLocaleStmt.executeQuery();
-      Map<String, Set<String>> textToSpeechLocales = new HashMap<>();
-
-      while (resultsSet.next()) {
-        String msgLocale = resultsSet.getString("message_locale");
-        String audLocale = resultsSet.getString("audio_locale");
-        textToSpeechLocales.computeIfAbsent(msgLocale, ml -> new HashSet<>());
-        String[] audLocaleParts = audLocale.split("-");
-        if (audLocaleParts.length > 0) {
-          Set<String> audSet = textToSpeechLocales.computeIfAbsent(audLocaleParts[0], (k) -> new HashSet<>());
-          audSet.add(audLocale);
-        }
+      Statement sqlStatement = connection.createStatement();
+      ResultSet resultSet = sqlStatement.executeQuery(query);
+      while (resultSet.next()) {
+        boolean isAudio = resultSet.getBoolean("is_audio");
+        String chatRoomId = resultSet.getString("chatroom_id");
+        messageDao = new MessageDao();
+        messageDao.setAudio(isAudio);
+        messageDao.setChatRoomId(UUID.fromString(chatRoomId));
       }
-      connection.commit();
-      resultsSet.close();
-      getMessageLocaleStmt.close();
-
-      for (String locale: textToSpeechLocales.keySet()) {
-        Set<String> audLocals = textToSpeechLocales.get(locale);
-        PubSubExchangeMessage exchangeMessage = new PubSubExchangeMessage(messageDao, locale, audLocals);
-        forwardToTextToTextService(exchangeMessage);
-        StringBuilder audLocaleCollector = new StringBuilder();
-        audLocals.forEach(audLocaleCollector::append);
-        logger.info(String.format("Published T2T translation request for lang [%s] with audio-set [%s]", locale, audLocaleCollector));
-      }
-    } catch (Exception ex) {
-      ex.printStackTrace();
+      resultSet.close();
+      sqlStatement.close();
+    } catch (SQLException throwables) {
+      throwables.printStackTrace();
+    } finally {
       try {
         if (connection != null) {
-          connection.rollback();
+          connection.close();
         }
       } catch (SQLException se) {
         se.printStackTrace();
       }
+    }
+    return messageDao;
+  }
+
+
+  @Override
+  public void accept(PubSubMessage pubSubMessage, Context context) {
+    if (pubSubMessage.data == null || StringUtils.isBlank(pubSubMessage.data)) {
+      logger.warning("Received pubsub message with null/blank message id.");
+      return;
+    }
+    String receivedMessageId = new String(Base64.getDecoder().decode(pubSubMessage.data));
+    logger.info("Processing message id: " + receivedMessageId);
+
+    Connection connection = null;
+    MessageDao messageDao = loadMessage(receivedMessageId);
+    if (messageDao == null) {
+      logger.log(Level.SEVERE, String.format("Failed to load message info for id [%s]", receivedMessageId));
+      return;
+    }
+    if (messageDao.isAudio()) {
+      forwardToSpeechToTextService(receivedMessageId);
+      return;
+    }
+
+    try {
+      String query = String.format(GET_LOCALES_QUERY, messageDao.getChatRoomId().toString());
+      connection = getConnection();
+      Statement getMessageLocaleStmt = connection.createStatement();
+      ResultSet resultsSet = getMessageLocaleStmt.executeQuery(query);
+      Set<String> textLocales = new HashSet<>();
+      while (resultsSet.next()) {
+        String msgLocale = resultsSet.getString("message_locale");
+        textLocales.add(msgLocale);
+      }
+      resultsSet.close();
+      getMessageLocaleStmt.close();
+      for (String locale: textLocales) {
+        forwardToTextToTextService(receivedMessageId, locale);
+        logger.info(String.format("Published T2T translation request for lang [%s]", locale));
+      }
+    } catch (Exception ex) {
+      ex.printStackTrace();
     } finally {
       try {
         if (connection != null) {
@@ -157,9 +177,8 @@ public class InitTranslation implements BackgroundFunction<PubSubMessage> {
     }
   }
 
-  private void forwardToSpeechToTextService(MessageDao messageDao) {
-    String publishMessage = messageDao.getJsonString();
-    ByteString byteStr = ByteString.copyFrom(publishMessage, StandardCharsets.UTF_8);
+  private void forwardToSpeechToTextService(String messageId) {
+    ByteString byteStr = ByteString.copyFrom(messageId, StandardCharsets.UTF_8);
     PubsubMessage pubsubApiMessage = PubsubMessage.newBuilder().setData(byteStr).build();
     try {
       Publisher publisher = getPublisher(PUBLISH_SPEECH_TO_TEXT_MSG_TOPIC);
@@ -169,9 +188,8 @@ public class InitTranslation implements BackgroundFunction<PubSubMessage> {
     }
   }
 
-  private void forwardToTextToTextService(PubSubExchangeMessage pubSubExchangeMessage) {
-    String publishMessage = pubSubExchangeMessage.getJsonString();
-    ByteString byteStr = ByteString.copyFrom(publishMessage, StandardCharsets.UTF_8);
+  private void forwardToTextToTextService(String messageId, String locale) {
+    ByteString byteStr = ByteString.copyFrom(String.format("%s::%s", messageId, locale), StandardCharsets.UTF_8);
     PubsubMessage pubsubApiMessage = PubsubMessage.newBuilder().setData(byteStr).build();
     try {
       Publisher publisher = getPublisher(PUBLISH_TEXT_TO_TEXT_MSG_TOPIC);

@@ -17,7 +17,7 @@ public class MessageDao {
   private String audioLocale;
   private boolean isAudio;
 
-  private MessageDao() {}
+  public MessageDao() {}
 
   public static MessageDao fromChat(ChatMessage chatMessage, int index) {
     MessageDao newMessage = new MessageDao();

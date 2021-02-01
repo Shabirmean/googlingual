@@ -177,6 +177,28 @@ const DISCONNECT_USER_SQL = `UPDATE roomusers_v2
    WHERE socket_id = ?
    AND user_id = ?;`;
 
+async function fetchConnectedUsers(chatRoom) {
+  dbPool = dbPool || await createPoolAndEnsureSchema();
+  try {
+    const stmt = `SELECT
+         user_id,
+         message_locale,
+         audio_locale,
+         audio_enabled,
+         socket_id,
+         name,
+         avatar
+        FROM roomusers_v2
+        WHERE chatroom_id = UUID_TO_BIN(?)
+        AND disconnected = 0;`;
+    const roomUsersQuery = dbPool.query(stmt, [chatRoom]);
+    return await roomUsersQuery;
+  } catch (err) {
+    console.log(err);
+    return [];
+  }
+}
+
 async function registerNewUser(data, updateOnly = false) {
   dbPool = dbPool || await createPoolAndEnsureSchema();
   const audioEnabled = !!data.audioEnabled;
@@ -230,34 +252,47 @@ async function unregisterUser(userId, socketId) {
   }
 }
 
-async function fetchConnectedUsers(chatRoom) {
+async function getMessage(messageId) {
   dbPool = dbPool || await createPoolAndEnsureSchema();
   try {
     const stmt = `SELECT
-       user_id,
-       message_locale,
-       audio_locale,
-       audio_enabled,
-       socket_id,
-       name,
-       avatar
-      FROM roomusers_v2
-      WHERE chatroom_id = UUID_TO_BIN(?)
-      AND disconnected = 0;`;
-    const roomUsersQuery = dbPool.query(stmt, [chatRoom]);
-    return await roomUsersQuery;
+         id,
+         message_locale,
+         audio_locale,
+         message,
+         audio_message,
+         msg_index,
+         chatroom_id,
+         sender
+        FROM messages_v2
+        WHERE id = UUID_TO_BIN(?)
+        LIMIT 1 `;
+    const loadedMessage = await dbPool.query(stmt, [messageId]);
+    console.log(loadedMessage);
+    return {
+      id: messageId,
+      message: loadedMessage.message,
+      audioMessage: loadedMessage.audio_message,
+      audioLocale: loadedMessage.audio_locale,
+      messageLocale: loadedMessage.message_locale,
+      chatRoomId: loadedMessage.chatroom_id,
+      sender: loadedMessage.sender,
+      messageIndex: loadedMessage.msg_index,
+    };
   } catch (err) {
     console.log(err);
-    return [];
+    return { id: messageId };
   }
 }
 
 async function handlePubSubMessage(message) {
   const payload = JSON.parse(message.data);
-  console.log(`Received message ${message.id} with attributes: `, message.attributes);
+  console.log(`Received message [PubSub ID: ${message.id} &
+    Googlingual ID: ${messageId}] with attributes: `, message.attributes);
   message.ack();
 
-  const chatMessage = payload.message;
+  const messageId = payload.split("::")[0];
+  const chatMessage = await getMessage(messageId);
   const chatRoom = chatMessage.chatRoomId;
   const roomUsers = await getUsers(chatRoom);
   const msgAuthor = roomUsers.find(u => u.user_id === chatMessage.sender);

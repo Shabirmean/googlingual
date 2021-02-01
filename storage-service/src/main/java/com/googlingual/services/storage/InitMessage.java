@@ -138,10 +138,8 @@ public class InitMessage implements BackgroundFunction<PubSubMessage> {
       insertMessageStmt.setString(10, chatMessage.getAuthor().getId());
       insertMessageStmt.execute();
       connection.commit();
-      logger.info(
-          String.format("Inserted new message [id: %s], [message: %s]", newMessageId, message));
-      forwardToTranslationService(MessageDao.fromChat(chatMessage, nextIndex));
-
+      logger.info(String.format("Inserted new message [id: %s], [message: %s]", newMessageId, message));
+      forwardToTranslationService(newMessageId);
       getLastMsgIndexStmt.close();
       insertMessageStmt.close();
     } catch (Exception ex) {
@@ -164,9 +162,8 @@ public class InitMessage implements BackgroundFunction<PubSubMessage> {
     }
   }
 
-  private void forwardToTranslationService(MessageDao messageDao) {
-    String publishMessage = messageDao.getJsonString();
-    ByteString byteStr = ByteString.copyFrom(publishMessage, StandardCharsets.UTF_8);
+  private void forwardToTranslationService(String messageId) {
+    ByteString byteStr = ByteString.copyFrom(messageId, StandardCharsets.UTF_8);
     PubsubMessage pubsubApiMessage = PubsubMessage.newBuilder().setData(byteStr).build();
     try {
       Publisher publisher = getPublisher();
