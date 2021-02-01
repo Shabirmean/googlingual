@@ -271,13 +271,13 @@ async function getMessage(messageId) {
     console.log(loadedMessage);
     return {
       id: messageId,
-      message: loadedMessage.message,
-      audioMessage: loadedMessage.audio_message,
-      audioLocale: loadedMessage.audio_locale,
-      messageLocale: loadedMessage.message_locale,
-      chatRoomId: loadedMessage.chatroom_id,
-      sender: loadedMessage.sender,
-      messageIndex: loadedMessage.msg_index,
+      message: loadedMessage[0].message,
+      audioMessage: loadedMessage[0].audio_message,
+      audioLocale: loadedMessage[0].audio_locale,
+      messageLocale: loadedMessage[0].message_locale,
+      chatRoomId: loadedMessage[0].chatroom_id,
+      sender: loadedMessage[0].sender,
+      messageIndex: loadedMessage[0].msg_index,
     };
   } catch (err) {
     console.log(err);
