@@ -2,7 +2,7 @@ package com.googlingual.services.t2t.util;
 
 public class SqlConstants {
   public static final String SELECT_MESSAGE_QUERY = ""
-      + "SELECT message, message_locale, chatroom_id, msg_index, sender "
+      + "SELECT message, message_locale, BIN_TO_UUID(chatroom_id) chatroom_id, msg_index, sender "
       + "FROM messages_v2 "
       + "WHERE id = UUID_TO_BIN('%s');";
 
