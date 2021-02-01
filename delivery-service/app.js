@@ -268,7 +268,6 @@ async function getMessage(messageId) {
         WHERE id = UUID_TO_BIN(?)
         LIMIT 1 `;
     const loadedMessage = await dbPool.query(stmt, [messageId]);
-    console.log(loadedMessage);
     return {
       id: messageId,
       message: loadedMessage[0].message,
