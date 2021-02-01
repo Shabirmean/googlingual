@@ -262,7 +262,7 @@ async function getMessage(messageId) {
          message,
          audio_message,
          msg_index,
-         chatroom_id,
+         BIN_TO_UUID(chatroom_id) chatroom_id,
          sender
         FROM messages_v2
         WHERE id = UUID_TO_BIN(?)
