@@ -19,8 +19,6 @@ public class SqlConstants {
       + "is_audio, "
       + "message_locale, "
       + "message, "
-      + "audio_locale, "
-      + "audio_message, "
       + "msg_index, "
       + "chatroom_id, "
       + "sender "
