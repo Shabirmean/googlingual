@@ -11,6 +11,7 @@ public class SqlConstants {
       + "FROM roomusers_v2 "
       + "WHERE chatroom_id = UUID_TO_BIN('%s') "
       + "AND audio_locale LIKE '%s%%' "
+      + "AND disconnected = 0 "
       + "GROUP BY audio_locale;";
 
   public static final String INSERT_MESSAGE_QUERY = "INSERT INTO messages_v2 ("

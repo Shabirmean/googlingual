@@ -10,5 +10,6 @@ public class SqlConstants {
       + "SELECT message_locale "
       + "FROM roomusers_v2 "
       + "WHERE chatroom_id = UUID_TO_BIN('%s') "
+      + "AND disconnected = 0 "
       + "GROUP BY message_locale;";
 }

@@ -230,14 +230,7 @@ public class TextToText implements BackgroundFunction<PubSubMessage> {
       logger.info(String.format("Inserted translated text message [id: %s]", newMessageId));
       forwardMessage(newMessageId, audioLocales);
     } catch (Exception ex) {
-      ex.printStackTrace();
-      try {
-        if (connection != null) {
-          connection.rollback();
-        }
-      } catch (SQLException se) {
-        se.printStackTrace();
-      }
+      logger.log(Level.SEVERE, "Failed to translate text to text: [" + messageId + "]", ex);
     } finally {
       try {
         if (connection != null) {

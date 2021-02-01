@@ -7,5 +7,7 @@ public class SqlConstants {
       + "WHERE id = UUID_TO_BIN('%s');";
 
   public static final String UPDATE_MESSAGE_QUERY =
-      "UPDATE messages_v2 SET audio_message = '%s', audio_locale = '%s' WHERE id = UUID_TO_BIN('%s')";
+      "UPDATE messages_v2 "
+          + "SET audio_message = '%s', audio_locale = '%s' "
+          + "WHERE id = UUID_TO_BIN('%s')";
 }
