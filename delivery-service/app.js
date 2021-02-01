@@ -286,7 +286,7 @@ async function getMessage(messageId) {
 }
 
 async function handlePubSubMessage(message) {
-  const payload = JSON.parse(message.data);
+  const payload = message.data;
   console.log(`Received message [PubSub ID: ${message.id} &
     Googlingual ID: ${messageId}] with attributes: `, message.attributes);
   message.ack();
