@@ -23,7 +23,7 @@
         font-style: italic;
         font-weight: bold;
         background-color: #3d6fa5;
-      ">This is not an officel Google Project. This is a personal project</button>
+      ">This is not an official Google Project. This is a personal project</button>
   </div>
 </template>
 
