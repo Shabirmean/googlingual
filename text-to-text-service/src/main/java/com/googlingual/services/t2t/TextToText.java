@@ -243,7 +243,6 @@ public class TextToText implements BackgroundFunction<PubSubMessage> {
   }
 
   private void forwardMessage(String messageId, Set<String> audioLocales) {
-//    publishTranslatedMessage(messageId);
     for (String audioLocale: audioLocales) {
       forwardToTextToSpeechService(messageId, audioLocale);
       logger.info(String.format("Published T2S translation request for audio lang [%s]", audioLocale));
@@ -261,18 +260,6 @@ public class TextToText implements BackgroundFunction<PubSubMessage> {
       e.printStackTrace();
     }
   }
-
-//  private void publishTranslatedMessage(String messageId) {
-//    ByteString byteStr = ByteString.copyFrom(messageId, StandardCharsets.UTF_8);
-//    PubsubMessage pubsubApiMessage = PubsubMessage.newBuilder().setData(byteStr).build();
-//    try {
-//      Publisher publisher = getPublisher(PUBLISH_TEXT_TRANSLATED_MSG_TOPIC);
-//      publisher.publish(pubsubApiMessage).get();
-//      logger.info(String.format("Published translated TEXT message [id - %s]", messageId));
-//    } catch (IOException | InterruptedException | ExecutionException e) {
-//      e.printStackTrace();
-//    }
-//  }
 
   public static class PubSubMessage {
     String data;

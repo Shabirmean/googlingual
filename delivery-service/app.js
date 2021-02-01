@@ -292,6 +292,11 @@ async function handlePubSubMessage(message) {
 
   const messageId = new String(payload).split("::")[0];
   const chatMessage = await getMessage(messageId);
+  const printMsg = {
+    ...chatMessage,
+    audioMessage: !!chatMessage.audioMessage ? '<ENCODED_AUDIO>' : null
+  };
+  console.log(`Data read from DB ${JSON.stringify(printMsg)}`);
   const chatRoom = chatMessage.chatRoomId;
   const roomUsers = await getUsers(chatRoom);
   const msgAuthor = roomUsers.find(u => u.user_id === chatMessage.sender);
