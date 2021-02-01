@@ -192,7 +192,7 @@ public class TextToText implements BackgroundFunction<PubSubMessage> {
     String sourceLocale = loadedMessage.getMessageLocale();
     String messageToTranslate = loadedMessage.getMessage();
     String chatroomId = loadedMessage.getChatRoomId().toString();
-    Set<String> audioLocales = loadAudioLocales(sourceLocale, chatroomId);
+    Set<String> audioLocales = loadAudioLocales(destinationLocale, chatroomId);
     if (sourceLocale.equals(destinationLocale)) {
       logger.info(String.format(
           "Skipping text translation for source language [%s]. Directly forwarding to delivery and audio services", sourceLocale));
