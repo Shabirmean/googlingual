@@ -256,7 +256,7 @@ async function getMessage(messageId) {
   dbPool = dbPool || await createPoolAndEnsureSchema();
   try {
     const stmt = `SELECT
-         id,
+         BIN_TO_UUID(id) id,
          message_locale,
          audio_locale,
          message,
